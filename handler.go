@@ -1,12 +1,16 @@
 package monitormysql
 
 import (
-	"fmt"
 	"net/http"
 )
 
+// Package monitor-mysql 监控 mysql 数据库变更
+
+// MonitorHandler 监控处理器接口
 type MonitorHandler interface {
+	// OnChange 处理更新信息
 	OnChange(ui UpdateInfo) error
+	// AddSseClient 添加 SSE 客户端
 	AddSseClient(w http.ResponseWriter, r *http.Request)
 }
 
@@ -50,7 +54,7 @@ type TplNodeHandler struct {
 
 func (h *TplNodeHandler) OnChange(ui UpdateInfo) error {
 	// 处理更新信息
-	fmt.Printf("%-v\n", ui)
+	//fmt.Printf("%-v\n", ui)
 	//oldRaw, newRaw, err := ConvertByUpdateInfo[TplNodeModel](ui)
 	//if err != nil {
 	//	slog.Error(fmt.Sprintf("转换更新信息失败: %v", err))

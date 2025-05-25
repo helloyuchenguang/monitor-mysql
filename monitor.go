@@ -49,7 +49,6 @@ func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
 			after := e.Rows[i+1]
 			// 转换为UpdateInfo
 			ui := FromRows(tableSchema, tableName, cols, before, after)
-			fmt.Println("发送")
 			// 处理更新信息
 			err := handler.OnChange(ui)
 			if err != nil {

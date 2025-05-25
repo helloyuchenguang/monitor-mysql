@@ -12,7 +12,7 @@ type Client struct {
 
 func main() {
 	// monitor-mysql
-	monitormysql.Run("./config.yml")
+	monitormysql.Run("./config/config-5900x.yml")
 	// gin web
 	router := gin.Default()
 	router.Static("/static", "./static")
@@ -31,5 +31,8 @@ func main() {
 		}
 	})
 
-	router.Run(":28080")
+	err := router.Run(":28080")
+	if err != nil {
+		return
+	}
 }

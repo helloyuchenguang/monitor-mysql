@@ -42,6 +42,7 @@
             outline: none;
             transition: box-shadow 0.2s ease;
         }
+
         .entry:focus,
         .entry:hover {
             box-shadow: 0 4px 12px rgb(0 0 0 / 0.2);
@@ -74,6 +75,7 @@
             font-size: 14px;
             color: #333;
         }
+
         .fields-list .field-name {
             font-weight: 600;
             color: #d9480f;
@@ -81,11 +83,13 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
         .fields-list .field-type {
             font-style: italic;
             color: #666;
             white-space: nowrap;
         }
+
         .fields-list .field-old,
         .fields-list .field-new {
             overflow-wrap: anywhere;
@@ -260,12 +264,18 @@
             if (value === undefined) return 'undefined';
             if (Array.isArray(value)) return '数组';
             switch (typeof value) {
-                case 'string': return '字符串';
-                case 'number': return '数字';
-                case 'boolean': return '布尔值';
-                case 'object': return '对象';
-                case 'function': return '函数';
-                default: return typeof value;
+                case 'string':
+                    return '字符串';
+                case 'number':
+                    return '数字';
+                case 'boolean':
+                    return '布尔值';
+                case 'object':
+                    return '对象';
+                case 'function':
+                    return '函数';
+                default:
+                    return typeof value;
             }
         }
 
