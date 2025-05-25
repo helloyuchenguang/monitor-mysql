@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	cmap "github.com/orcaman/concurrent-map/v2"
 	"log/slog"
 	"net/http"
-	"sync"
 )
 
 // SSEClient 代表一个客户端连接
@@ -26,14 +26,13 @@ func NewSSEClient() *SSEClient {
 
 // SSEServer 代表一个SSE服务器
 type SSEServer struct {
-	mu      sync.RWMutex
-	clients map[string]*SSEClient
+	clients cmap.ConcurrentMap[string, *SSEClient]
 }
 
 // NewSSEServer  监控处理器接口
 func NewSSEServer() *SSEServer {
 	return &SSEServer{
-		clients: make(map[string]*SSEClient),
+		clients: cmap.New[*SSEClient](),
 	}
 }
 
@@ -46,18 +45,15 @@ func (s *SSEServer) AddClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 创建一个新的客户端
-	s.mu.Lock()
 	newClient := NewSSEClient()
 	clientID := newClient.ID
-	s.clients[clientID] = newClient
-	s.mu.Unlock()
+	s.clients.Set(clientID, newClient)
+	slog.Info("新客户端连接", slog.String("clientID", clientID))
 
 	// 关闭通道
 	defer func() {
 		// 获取锁，删除客户端
-		s.mu.Lock()
-		delete(s.clients, clientID)
-		s.mu.Unlock()
+		s.clients.Remove(clientID)
 	}()
 
 	// SSE headers
@@ -83,10 +79,7 @@ func (s *SSEServer) AddClient(w http.ResponseWriter, r *http.Request) {
 // Broadcast 广播消息给所有客户端
 func (s *SSEServer) Broadcast(data any) {
 	msg, _ := json.Marshal(data)
-
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	for _, client := range s.clients {
+	for _, client := range s.clients.Items() {
 		select {
 		case client.Chan <- msg:
 		default:
