@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>实时SSE数据变更展示（序号+时间+详情对比）</title>
+    <style>
+        /* Reset 和基础 */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #0366d6;
+            font-weight: 700;
+        }
+
+        #log {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .entry {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+            padding: 16px 20px;
+            cursor: pointer;
+            outline: none;
+            transition: box-shadow 0.2s ease;
+        }
+        .entry:focus,
+        .entry:hover {
+            box-shadow: 0 4px 12px rgb(0 0 0 / 0.2);
+        }
+
+        .entry-header {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #0366d6;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .entry-time {
+            color: #666;
+            font-size: 0.9rem;
+            user-select: none;
+        }
+
+        .fields-list {
+            margin-top: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+            display: grid;
+            grid-template-columns: 120px 100px 1fr 1fr;
+            gap: 8px 12px;
+            font-size: 14px;
+            color: #333;
+        }
+        .fields-list .field-name {
+            font-weight: 600;
+            color: #d9480f;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .fields-list .field-type {
+            font-style: italic;
+            color: #666;
+            white-space: nowrap;
+        }
+        .fields-list .field-old,
+        .fields-list .field-new {
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+        }
+
+        .fields-list .header {
+            font-weight: 700;
+            background: #f0f4f8;
+            padding: 6px 4px;
+            border-radius: 4px;
+            user-select: none;
+        }
+
+        .changed-field {
+            background: #fff4e5;
+            border-radius: 4px;
+            padding: 4px 6px;
+        }
+
+        /* 弹窗遮罩 */
+        #modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        #modal.active {
+            display: flex;
+        }
+
+        #modal-content {
+            background: white;
+            border-radius: 8px;
+            max-width: 850px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        #modal-close {
+            position: absolute;
+            top: 12px;
+            right: 18px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #999;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+        }
+
+        #modal-close:hover {
+            color: #555;
+        }
+
+        #modal-title {
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #0366d6;
+            font-size: 1.3rem;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            word-wrap: break-word;
+            vertical-align: top;
+            text-align: left;
+        }
+
+        th {
+            background: #0366d6;
+            color: white;
+            font-weight: 700;
+        }
+
+        tbody tr:hover {
+            background-color: #f0f8ff;
+        }
+
+        tbody tr.changed-row {
+            background-color: #fff4e5;
+        }
+
+        .type-cell {
+            font-style: italic;
+            color: #666;
+            width: 100px;
+        }
+
+        .field-name {
+            font-weight: 600;
+            color: #d9480f;
+        }
+    </style>
+</head>
+<body>
+
+<h2>实时数据库变更展示</h2>
+<div id="log" aria-live="polite" aria-relevant="additions"></div>
+
+<!-- 弹窗 -->
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div id="modal-content">
+        <div id="modal-close" aria-label="关闭">&times;</div>
+        <div id="modal-title"></div>
+        <table id="modal-table" role="table" aria-describedby="modal-title">
+            <thead>
+            <tr>
+                <th scope="col">字段名</th>
+                <th scope="col">字段类型</th>
+                <th scope="col">旧值</th>
+                <th scope="col">新值</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const sseUrl = '/stream/TplNodeHandler';
+        const log = document.getElementById('log');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalClose = document.getElementById('modal-close');
+        const modalTableBody = document.querySelector('#modal-table tbody');
+
+        let seq = 0;  // 序号
+        const dataCache = new Map();  // 存储id对应的旧新数据，方便弹窗查看
+
+        // 格式化时间
+        function formatTime(date) {
+            return date.toLocaleTimeString('zh-CN', {hour12: false}) + '.' + String(date.getMilliseconds()).padStart(3, '0');
+        }
+
+        // 生成变化字段摘要文本，格式：字段名: 旧值→新值
+        function buildChangeSummary(edits, oldData, newData) {
+            const parts = [];
+            for (const key in edits) {
+                if (edits.hasOwnProperty(key)) {
+                    const oldVal = oldData[key] ?? '';
+                    const newVal = newData[key] ?? '';
+                    parts.push(`${key}: ${oldVal} → ${newVal}`);
+                }
+            }
+            return parts.join('，');
+        }
+
+        // 辅助：判断字段类型（简单版）
+        function getType(value) {
+            if (value === null) return 'null';
+            if (value === undefined) return 'undefined';
+            if (Array.isArray(value)) return '数组';
+            switch (typeof value) {
+                case 'string': return '字符串';
+                case 'number': return '数字';
+                case 'boolean': return '布尔值';
+                case 'object': return '对象';
+                case 'function': return '函数';
+                default: return typeof value;
+            }
+        }
+
+        // 将复杂值转为字符串（比如对象或数组）
+        function stringifyValue(val) {
+            if (val === null) return 'null';
+            if (val === undefined) return '';
+            if (typeof val === 'object') {
+                try {
+                    return JSON.stringify(val, null, 0);
+                } catch {
+                    return String(val);
+                }
+            }
+            return String(val);
+        }
+
+        // 生成条目dom
+        function createEntry(seq, time, id, edits, oldData, newData) {
+            const entry = document.createElement('div');
+            entry.className = 'entry';
+            entry.tabIndex = 0;
+            entry.setAttribute('role', 'button');
+            entry.setAttribute('aria-pressed', 'false');
+            entry.dataset.id = id;
+            entry.setAttribute('aria-label', `第${seq}条变更记录，ID为${id}，时间${time}`);
+
+            // 头部信息
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'entry-header';
+
+            const seqSpan = document.createElement('span');
+            seqSpan.textContent = `#${seq}`;
+
+            const idSpan = document.createElement('span');
+            idSpan.textContent = `ID: ${id}`;
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'entry-time';
+            timeSpan.textContent = time;
+
+            headerDiv.appendChild(seqSpan);
+            headerDiv.appendChild(idSpan);
+            headerDiv.appendChild(timeSpan);
+
+            entry.appendChild(headerDiv);
+
+            // 字段列表标题
+            const titles = ['字段名', '字段类型', '旧值', '新值'];
+            const fieldsList = document.createElement('div');
+            fieldsList.className = 'fields-list';
+
+            titles.forEach(title => {
+                const div = document.createElement('div');
+                div.className = 'header';
+                div.textContent = title;
+                fieldsList.appendChild(div);
+            });
+
+            // 字段数据
+            const changedKeys = Object.keys(edits).sort();
+            for (const key of changedKeys) {
+                const oldVal = oldData[key];
+                const newVal = newData[key];
+
+                // 字段名
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'field-name changed-field';
+                nameDiv.textContent = key;
+                fieldsList.appendChild(nameDiv);
+
+                // 字段类型（使用新值类型优先）
+                const fieldType = getType(newVal !== undefined ? newVal : oldVal);
+                const typeDiv = document.createElement('div');
+                typeDiv.className = 'field-type changed-field';
+                typeDiv.textContent = fieldType;
+                fieldsList.appendChild(typeDiv);
+
+                // 旧值
+                const oldDiv = document.createElement('div');
+                oldDiv.className = 'field-old changed-field';
+                oldDiv.textContent = stringifyValue(oldVal);
+                fieldsList.appendChild(oldDiv);
+
+                // 新值
+                const newDiv = document.createElement('div');
+                newDiv.className = 'field-new changed-field';
+                newDiv.textContent = stringifyValue(newVal);
+                fieldsList.appendChild(newDiv);
+            }
+
+            entry.appendChild(fieldsList);
+
+            // 点击/键盘事件弹窗显示详情
+            entry.addEventListener('click', () => openModal(id));
+            entry.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openModal(id);
+                }
+            });
+
+            return entry;
+        }
+
+        // 弹窗打开
+        function openModal(id) {
+            const record = dataCache.get(id);
+            if (!record) return;
+            modalTitle.textContent = `详细对比 - ID: ${id}`;
+            modalTableBody.innerHTML = ''; // 清空
+
+            const {Old: oldData, New: newData, edits} = record;
+
+            // 合并字段保证全字段展示
+            const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
+            const keys = Array.from(allKeys).sort();
+
+            for (const key of keys) {
+                const oldVal = oldData[key];
+                const newVal = newData[key];
+                const changed = edits && edits[key];
+
+                const tr = document.createElement('tr');
+                if (changed) {
+                    tr.classList.add('changed-row');
+                }
+
+                // 字段名
+                const tdKey = document.createElement('td');
+                tdKey.className = 'field-name';
+                tdKey.textContent = key;
+                tr.appendChild(tdKey);
+
+                // 字段类型，优先根据新值判断，没有则根据旧值
+                const fieldType = getType(newVal !== undefined ? newVal : oldVal);
+                const tdType = document.createElement('td');
+                tdType.className = 'type-cell';
+                tdType.textContent = fieldType;
+                tr.appendChild(tdType);
+
+                // 旧值
+                const tdOld = document.createElement('td');
+                tdOld.className = 'value-old';
+                tdOld.textContent = oldVal === undefined ? '' : stringifyValue(oldVal);
+                tr.appendChild(tdOld);
+
+                // 新值
+                const tdNew = document.createElement('td');
+                tdNew.className = 'value-new';
+                tdNew.textContent = newVal === undefined ? '' : stringifyValue(newVal);
+                tr.appendChild(tdNew);
+
+                modalTableBody.appendChild(tr);
+            }
+
+            modal.classList.add('active');
+            modalClose.focus();
+        }
+
+        // 弹窗关闭
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', e => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+        // ESC关闭弹窗
+        window.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+
+        // 处理接收到的新数据
+        function updateData(json) {
+            const oldData = json.DataUpdate?.Old;
+            const newData = json.DataUpdate?.New;
+            const edits = json.Edits || {};
+            if (!oldData || !newData) return;
+
+            const id = newData.id;
+            if (!id) return;
+
+            // 过滤：只保留变化字段
+            const changedKeys = Object.keys(edits);
+            if (changedKeys.length === 0) return; // 无变化跳过
+
+            // 序号和时间
+            seq++;
+            const now = new Date();
+            const timeStr = formatTime(now);
+
+            // 创建新条目
+            const entry = createEntry(seq, timeStr, id, edits, oldData, newData);
+
+            // 新数据插入最前面
+            if (log.firstChild) {
+                log.insertBefore(entry, log.firstChild);
+            } else {
+                log.appendChild(entry);
+            }
+
+            // 缓存数据方便详情查看（保留最新一条）
+            dataCache.set(id, {Old: oldData, New: newData, edits});
+        }
+
+        // 初始化 SSE
+        function initSSE() {
+            const evtSource = new EventSource(sseUrl);
+            evtSource.onmessage = e => {
+                try {
+                    const json = JSON.parse(e.data);
+                    updateData(json);
+                } catch (err) {
+                    console.error('解析SSE数据失败', err);
+                }
+            };
+            evtSource.onerror = err => {
+                console.error('SSE连接错误', err);
+            };
+        }
+
+        window.addEventListener('load', initSSE);
+    })();
+</script>
+
+</body>
+</html>
