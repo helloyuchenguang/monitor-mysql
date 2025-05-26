@@ -1,17 +1,48 @@
-package monitormysql
+package mevent
 
 import (
+	"github.com/go-mysql-org/go-mysql/canal"
 	"github.com/go-mysql-org/go-mysql/schema"
 	"reflect"
+	"regexp"
 )
+
+// MonitorRule 监控处理器接口
+type MonitorRule interface {
+	// OnChange 处理更新信息
+	OnChange(ui UpdateInfo) error
+}
+
+// MyEventHandler 自定义事件处理器
+type MyEventHandler struct {
+	canal.DummyEventHandler
+	WatchRegexps []*regexp.Regexp
+	Handlers     []MonitorRule
+}
 
 // UpdateInfo 更新信息
 type UpdateInfo struct {
 	TableSchema string
 	TableName   string
-	ColumnMap   map[string]ColumnInfo
-	DataUpdate  DataUpdateInfo
-	Edits       map[string]UpdateValueInfo
+	ColumnMap   map[string]ColumnInfo `json:"-"`
+	// 数据更新信息
+	DataUpdate DataUpdateInfo
+	// 更新的列信息
+	Edits map[string]UpdateValueInfo
+}
+
+type DataUpdateInfo struct {
+	Old, New map[string]any
+}
+
+// ColumnInfo 列信息
+type ColumnInfo struct {
+	Name, RowType string
+}
+
+// UpdateValueInfo 更新值信息
+type UpdateValueInfo struct {
+	Old, New any
 }
 
 // FromRows 从行数据中获取更新信息
@@ -71,22 +102,4 @@ func FromRows(tableSchema, tableName string,
 		Edits:       edits,
 	}
 	return ui
-}
-
-type DataUpdateInfo struct {
-	Old, New map[string]any
-}
-
-// ColumnInfo 列信息
-type ColumnInfo struct {
-	Name, RowType string
-}
-
-// UpdateValueInfo 更新值信息
-type UpdateValueInfo struct {
-	Old, New any
-}
-
-// UpdateModeler 更新模型接口
-type UpdateModeler interface {
 }

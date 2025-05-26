@@ -1,4 +1,4 @@
-package monitormysql
+package global
 
 import (
 	"fmt"
@@ -19,8 +19,8 @@ type Config struct {
 		IncludeTableRegex []string `yaml:"include_table_regex"`
 	} `yaml:"database"`
 	WatchHandlers []struct {
-		TableRegex string `yaml:"table_regex"`
-		Handler    string `yaml:"handler"`
+		TableRegex string   `yaml:"table_regex"`
+		Rules      []string `yaml:"rules"`
 	} `yaml:"watch_handlers"`
 }
 

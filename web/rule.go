@@ -1,19 +1,15 @@
-package monitormysql
+package web
 
 import (
+	"log/slog"
+	"monitormysql/global"
+	"monitormysql/global/mevent"
 	"net/http"
 )
 
-// Package monitor-mysql 监控 mysql 数据库变更
+const ruleName = "SSERule"
 
-// MonitorHandler 监控处理器接口
-type MonitorHandler interface {
-	// OnChange 处理更新信息
-	OnChange(ui UpdateInfo) error
-	// AddSseClient 添加 SSE 客户端
-	AddSseClient(w http.ResponseWriter, r *http.Request)
-}
-
+// TplNodeModel 模板节点模型
 type TplNodeModel struct {
 	Id                        string `column:"id"`
 	AccKey                    string `column:"acc_key"`
@@ -48,22 +44,33 @@ type TplNodeModel struct {
 	IsTplNode                 int    `column:"is_tpl_node"`
 }
 
-type TplNodeHandler struct {
+// SSERule SSE 规则处理器
+type SSERule struct {
 	SseServer *SSEServer
 }
 
-func (h *TplNodeHandler) OnChange(ui UpdateInfo) error {
-	// 处理更新信息
-	//fmt.Printf("%-v\n", ui)
-	//oldRaw, newRaw, err := ConvertByUpdateInfo[TplNodeModel](ui)
-	//if err != nil {
-	//	slog.Error(fmt.Sprintf("转换更新信息失败: %v", err))
-	//	return err
-	//}
+func (h *SSERule) OnChange(ui mevent.UpdateInfo) error {
+	// 发布更新信息到所有 SSE 客户端
 	h.SseServer.Broadcast(ui)
 	return nil
 }
 
-func (h *TplNodeHandler) AddSseClient(w http.ResponseWriter, r *http.Request) {
+func (h *SSERule) AddSseClient(w http.ResponseWriter, r *http.Request) {
 	h.SseServer.AddClient(w, r)
+}
+
+func GetSSERule() *SSERule {
+	if rule, ok := global.GetRuleByName(ruleName); ok {
+		return (*rule).(*SSERule)
+	}
+	return nil
+}
+
+// 自动注册
+func init() {
+	slog.Info("自动注册 SSE 规则处理器")
+
+	global.RegisterRule(ruleName, &SSERule{
+		SseServer: NewSSEServer(),
+	})
 }

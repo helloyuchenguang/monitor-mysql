@@ -1,4 +1,4 @@
-package monitormysql
+package web
 
 import (
 	"encoding/json"
@@ -15,6 +15,7 @@ type SSEClient struct {
 	Chan chan []byte
 }
 
+// NewSSEClient 创建一个新的SSE客户端
 func NewSSEClient() *SSEClient {
 	return &SSEClient{
 		// 使用 github.com/google/uuid
