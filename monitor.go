@@ -46,7 +46,6 @@ func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
 
 	switch action {
 	case canal.UpdateAction:
-		slog.Info(fmt.Sprintf("<UNK> %s.%s <UNK>", tableSchema, tableName))
 		for i := 0; i < len(e.Rows); i += 2 {
 			before := e.Rows[i]
 			after := e.Rows[i+1]
