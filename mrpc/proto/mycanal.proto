@@ -90,4 +90,4 @@ service MyCanalService {
   rpc subscribeRegexTable(SubscribeTableRequest) returns (stream EventTableRowReply);
 }
 
-// protoc --go-grpc_out=. --go_out=. mycanal.proto
+// protoc --go-grpc_out=. --go_out=. ./proto/mycanal.proto
