@@ -49,9 +49,9 @@ type SSERule struct {
 	SseServer *SSEServer
 }
 
-func (h *SSERule) OnChange(ui mevent.UpdateInfo) error {
+func (h *SSERule) OnChange(sd *mevent.EditSourceData) error {
 	// 发布更新信息到所有 SSE 客户端
-	h.SseServer.Broadcast(ui)
+	h.SseServer.Broadcast(mevent.FromRows(sd))
 	return nil
 }
 

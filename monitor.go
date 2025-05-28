@@ -13,11 +13,11 @@ import (
 type MyEventHandler struct {
 	canal.DummyEventHandler
 	WatchRegexps []*regexp.Regexp
-	Rules        map[int][]*mevent.MonitorRule
+	Rules        map[int][]*mevent.MonitorRuler
 }
 
 // isWatched 判断表是否被监控
-func (h *MyEventHandler) isWatched(schema, table string) ([]*mevent.MonitorRule, bool) {
+func (h *MyEventHandler) isWatched(schema, table string) ([]*mevent.MonitorRuler, bool) {
 	fullName := fmt.Sprintf("%s.%s", schema, table)
 	for i, r := range h.WatchRegexps {
 		if r.MatchString(fullName) {
@@ -50,7 +50,13 @@ func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
 			before := e.Rows[i]
 			after := e.Rows[i+1]
 			for _, rule := range rules {
-				err := (*rule).OnChange(mevent.FromRows(tableSchema, tableName, cols, before, after))
+				err := (*rule).OnChange(&mevent.EditSourceData{
+					TableSchema: tableSchema,
+					TableName:   tableName,
+					Cols:        cols,
+					Before:      before,
+					After:       after,
+				})
 				if err != nil {
 					slog.Error(fmt.Sprintf("处理更新事件失败: %v", err))
 				}
@@ -107,7 +113,7 @@ func NewEventHandlerByConfig(cfg *global.Config) (*MyEventHandler, error) {
 	// 把schema和table正则合成一个正则表达式列表给IncludeTableRegex
 	var compiledRegexps []*regexp.Regexp
 	// 表格正则对应的监控规则
-	rules := make(map[int][]*mevent.MonitorRule, len(cfg.WatchHandlers))
+	rules := make(map[int][]*mevent.MonitorRuler, len(cfg.WatchHandlers))
 	for i, wt := range cfg.WatchHandlers {
 		r, err := regexp.Compile(wt.TableRegex)
 		if err != nil {
@@ -120,10 +126,10 @@ func NewEventHandlerByConfig(cfg *global.Config) (*MyEventHandler, error) {
 		// 如果没有规则,使用默认规则
 		if ruleSize == 0 {
 			slog.Error(fmt.Sprintf("表 %s 没有监控规则,使用默认监控规则", wt.TableRegex))
-			rules[i] = []*mevent.MonitorRule{global.GetDefaultRule()}
+			rules[i] = []*mevent.MonitorRuler{global.GetDefaultRule()}
 			continue
 		} else {
-			tableRules := make([]*mevent.MonitorRule, ruleSize)
+			tableRules := make([]*mevent.MonitorRuler, ruleSize)
 			for j, ruleName := range wt.Rules {
 				rule, ok := global.GetRuleByName(ruleName)
 				if !ok {
