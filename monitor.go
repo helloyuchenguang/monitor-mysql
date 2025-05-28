@@ -5,7 +5,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/canal"
 	"log/slog"
 	"monitormysql/global"
-	"monitormysql/global/mevent"
+	"monitormysql/global/mevent/edit"
 	"regexp"
 )
 
@@ -13,11 +13,11 @@ import (
 type MyEventHandler struct {
 	canal.DummyEventHandler
 	WatchRegexps []*regexp.Regexp
-	Rules        map[int][]*mevent.MonitorRuler
+	Rules        map[int][]*edit.MonitorRuler
 }
 
 // isWatched 判断表是否被监控
-func (h *MyEventHandler) isWatched(schema, table string) ([]*mevent.MonitorRuler, bool) {
+func (h *MyEventHandler) isWatched(schema, table string) ([]*edit.MonitorRuler, bool) {
 	fullName := fmt.Sprintf("%s.%s", schema, table)
 	for i, r := range h.WatchRegexps {
 		if r.MatchString(fullName) {
@@ -50,7 +50,7 @@ func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
 			before := e.Rows[i]
 			after := e.Rows[i+1]
 			for _, rule := range rules {
-				err := (*rule).OnChange(&mevent.EditSourceData{
+				err := (*rule).OnChange(&edit.EditSourceData{
 					TableSchema: tableSchema,
 					TableName:   tableName,
 					Cols:        cols,
@@ -113,7 +113,7 @@ func NewEventHandlerByConfig(cfg *global.Config) (*MyEventHandler, error) {
 	// 把schema和table正则合成一个正则表达式列表给IncludeTableRegex
 	var compiledRegexps []*regexp.Regexp
 	// 表格正则对应的监控规则
-	rules := make(map[int][]*mevent.MonitorRuler, len(cfg.WatchHandlers))
+	rules := make(map[int][]*edit.MonitorRuler, len(cfg.WatchHandlers))
 	for i, wt := range cfg.WatchHandlers {
 		r, err := regexp.Compile(wt.TableRegex)
 		if err != nil {
@@ -126,10 +126,10 @@ func NewEventHandlerByConfig(cfg *global.Config) (*MyEventHandler, error) {
 		// 如果没有规则,使用默认规则
 		if ruleSize == 0 {
 			slog.Error(fmt.Sprintf("表 %s 没有监控规则,使用默认监控规则", wt.TableRegex))
-			rules[i] = []*mevent.MonitorRuler{global.GetDefaultRule()}
+			rules[i] = []*edit.MonitorRuler{global.GetDefaultRule()}
 			continue
 		} else {
-			tableRules := make([]*mevent.MonitorRuler, ruleSize)
+			tableRules := make([]*edit.MonitorRuler, ruleSize)
 			for j, ruleName := range wt.Rules {
 				rule, ok := global.GetRuleByName(ruleName)
 				if !ok {

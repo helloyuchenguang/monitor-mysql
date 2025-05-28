@@ -1,4 +1,4 @@
-package mevent
+package edit
 
 import (
 	"github.com/go-mysql-org/go-mysql/schema"

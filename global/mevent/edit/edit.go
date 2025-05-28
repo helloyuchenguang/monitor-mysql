@@ -1,14 +1,9 @@
-package mevent
+package edit
 
 import (
 	"github.com/go-mysql-org/go-mysql/canal"
-	"monitormysql/mrpc/api/mycanal"
 	"regexp"
 )
-
-type EditReplyType interface {
-	[]byte | mycanal.EventTableRowReply
-}
 
 // MonitorRuler 监控处理器接口
 type MonitorRuler interface {

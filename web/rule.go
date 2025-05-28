@@ -3,11 +3,16 @@ package web
 import (
 	"log/slog"
 	"monitormysql/global"
-	"monitormysql/global/mevent"
-	"net/http"
+	"monitormysql/global/mevent/edit"
 )
 
 const ruleName = "SSERule"
+
+// 自动注册
+func init() {
+	slog.Info("自动注册 SSE 规则处理器")
+	global.RegisterRule(ruleName, edit.NewServer[[]byte]())
+}
 
 // TplNodeModel 模板节点模型
 type TplNodeModel struct {
@@ -42,35 +47,4 @@ type TplNodeModel struct {
 	ProjectSubChargeUser      string `column:"project_sub_charge_user"`
 	ProjectMembers            string `column:"project_members"`
 	IsTplNode                 int    `column:"is_tpl_node"`
-}
-
-// SSERule SSE 规则处理器
-type SSERule struct {
-	SseServer *SSEServer
-}
-
-func (h *SSERule) OnChange(sd *mevent.EditSourceData) error {
-	// 发布更新信息到所有 SSE 客户端
-	h.SseServer.Broadcast(mevent.FromRows(sd))
-	return nil
-}
-
-func (h *SSERule) AddSseClient(w http.ResponseWriter, r *http.Request) {
-	h.SseServer.AddClient(w, r)
-}
-
-func GetSSERule() *SSERule {
-	if rule, ok := global.GetRuleByName(ruleName); ok {
-		return (*rule).(*SSERule)
-	}
-	return nil
-}
-
-// 自动注册
-func init() {
-	slog.Info("自动注册 SSE 规则处理器")
-
-	global.RegisterRule(ruleName, &SSERule{
-		SseServer: NewSSEServer(),
-	})
 }

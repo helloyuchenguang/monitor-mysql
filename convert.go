@@ -2,7 +2,7 @@ package monitormysql
 
 import (
 	"fmt"
-	"monitormysql/global/mevent"
+	"monitormysql/global/mevent/edit"
 	"reflect"
 	"strings"
 )
@@ -52,7 +52,7 @@ func MapToStructByReflect(data map[string]any, out any) error {
 }
 
 // ConvertByUpdateInfo 将 UpdateInfo 转换为指定类型的结构体
-func ConvertByUpdateInfo[T any](updateInfo mevent.UpdateInfo) (T, T, error) {
+func ConvertByUpdateInfo[T any](updateInfo edit.UpdateInfo) (T, T, error) {
 	var oldRaw T
 	var newRaw T
 	err := MapToStructByReflect(updateInfo.DataUpdate.Old, &oldRaw)

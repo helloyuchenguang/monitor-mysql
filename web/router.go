@@ -2,6 +2,7 @@ package web
 
 import (
 	"github.com/gin-gonic/gin"
+	"monitormysql/global"
 )
 
 // StartServer 启动Web服务器
@@ -17,8 +18,8 @@ func StartServer() {
 
 	router.GET("/sse", func(c *gin.Context) {
 		//handlerType := c.Param("handlerType")
-		sseRule := GetSSERule()
-		sseRule.AddSseClient(c.Writer, c.Request)
+		sseRule := global.GetRule[[]byte]("SSERule")
+		sseRule.AddSSEClient(c.Writer, c.Request)
 	})
 
 	err := router.Run(":28080")
