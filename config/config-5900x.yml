@@ -13,3 +13,7 @@ watch_handlers:
   - table: "bigdata\\.user_info"
     handler: TplNodeHandler
 
+web:
+  addr: ":10820"
+grpc:
+  addr: ":10821"

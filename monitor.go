@@ -50,16 +50,18 @@ func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
 			before := e.Rows[i]
 			after := e.Rows[i+1]
 			for _, rule := range rules {
-				err := (*rule).OnChange(&edit.EditSourceData{
-					TableSchema: tableSchema,
-					TableName:   tableName,
-					Cols:        cols,
-					Before:      before,
-					After:       after,
-				})
-				if err != nil {
-					slog.Error(fmt.Sprintf("处理更新事件失败: %v", err))
-				}
+				go func() {
+					err := (*rule).OnChange(&edit.SourceData{
+						TableSchema: tableSchema,
+						TableName:   tableName,
+						Cols:        cols,
+						Before:      before,
+						After:       after,
+					})
+					if err != nil {
+						slog.Error(fmt.Sprintf("处理更新事件失败: %v", err))
+					}
+				}()
 			}
 		}
 	}
@@ -67,11 +69,11 @@ func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
 }
 
 // Run 启动
-func Run(cfgFile string) {
+func Run(cfgFile string) (*global.Config, error) {
 	// 加载配置文件
 	cfg, err := global.LoadConfig(cfgFile)
 	if err != nil {
-		return
+		return nil, err
 	}
 	// 创建canal.Config
 	canalCfg := NewCanalConfigByConfig(&cfg)
@@ -79,10 +81,10 @@ func Run(cfgFile string) {
 	handler, err := NewEventHandlerByConfig(&cfg)
 	if err != nil {
 		slog.Error(fmt.Sprintf("创建事件处理器失败: %v", err))
-		return
+		return nil, err
 	}
 	go func() { StartCanal(canalCfg, handler) }()
-	return
+	return &cfg, nil
 }
 
 // StartCanal 启动canal

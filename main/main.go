@@ -2,12 +2,17 @@ package main
 
 import (
 	"monitormysql"
+	"monitormysql/mrpc"
 	"monitormysql/web"
 	_ "monitormysql/web"
 )
 
 func main() {
 	// monitor-mysql
-	monitormysql.Run("./config/config.yml")
-	web.StartServer()
+	cnf, err := monitormysql.Run("./config/config.yml")
+	if err != nil {
+		panic(err)
+	}
+	go mrpc.RunGrpcCanal(cnf.GRPC.Addr)
+	web.StartServer(cnf.Web.Addr)
 }

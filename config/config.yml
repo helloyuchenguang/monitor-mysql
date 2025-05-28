@@ -12,6 +12,10 @@ database:
 watch_handlers:
   - table: "qucdin_lcoal\\.business_data_tpl_node_*"
     rules:
+      - GRPCRule
       - SSERule
 
-
+web:
+  addr: ":10820"
+grpc:
+  addr: ":10821"

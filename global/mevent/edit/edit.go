@@ -8,7 +8,7 @@ import (
 // MonitorRuler 监控处理器接口
 type MonitorRuler interface {
 	// OnChange 处理更新信息
-	OnChange(t *EditSourceData) error
+	OnChange(t *SourceData) error
 }
 
 // MyEventHandler 自定义事件处理器

@@ -4,7 +4,7 @@ syntax = "proto3";
 //option java_multiple_files = true;
 //option java_package = "com.ycg.sbgrpc.grpc.mycanal";
 option java_outer_classname = "MyCanalProto";
-option go_package = "api/mrpc";
+option go_package = "api/mycanal";
 
 package mycanal;
 
@@ -27,22 +27,22 @@ message EventTableRowReply {
   CanalEventType eventType = 1;
   // 表结构
   TableStructReply rowStruct = 2;
-  // 主键值
-  string pkValue = 3;
   // 插入信息
-  EventInsertInfoReply insertInfo = 4;
+  EventInsertInfoReply insertInfo = 3;
   // 删除信息
-  EventDeleteInfoReply deleteInfo = 5;
+  EventDeleteInfoReply deleteInfo = 4;
   // 修改信息
-  EventUpdateInfoReply updateInfo = 6;
+  EventUpdateInfoReply updateInfo = 5;
 }
 
 // 表结构信息
 message TableStructReply{
   // 数据库名称
-  string database = 2;
+  string schema = 1;
   // 表名
-  string table = 3;
+  string table = 2;
+  // 字段信息
+  repeated ColumnInfoReply columns = 3;
 }
 
 // 字段信息
@@ -68,6 +68,7 @@ message EventUpdateInfoReply{
   map<string, ColumnValueReply> editColumns = 3; // 字段信息
 }
 
+
 // 字段值变更信息
 message ColumnValueReply {
   // 修改前
@@ -88,3 +89,5 @@ service MyCanalService {
   // 服务端流式rpc
   rpc subscribeRegexTable(SubscribeTableRequest) returns (stream EventTableRowReply);
 }
+
+// protoc --go-grpc_out=. --go_out=. mycanal.proto

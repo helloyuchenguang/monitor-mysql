@@ -487,13 +487,16 @@
             dataCache.set(id, {Old: oldData, New: newData, edits});
         }
 
+        let count = 0;
+
         // 初始化 SSE
         function initSSE() {
             const evtSource = new EventSource(sseUrl);
             evtSource.onmessage = e => {
                 try {
-                    const json = JSON.parse(e.data);
-                    updateData(json);
+                    console.log('接收到SSE数据时间:', ++count, new Date().toISOString());
+                    // const json = JSON.parse(e.data);
+                    // updateData(json);
                 } catch (err) {
                     console.error('解析SSE数据失败', err);
                 }

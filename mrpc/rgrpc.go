@@ -3,18 +3,13 @@ package mrpc
 import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
-	"log/slog"
 	"monitormysql/mrpc/api/mycanal"
 	"net"
 )
 
-type MyCanalServer struct {
-	mycanal.UnimplementedMyCanalServiceServer
-}
-
-func RunGrpcCanal() {
+func RunGrpcCanal(address string) {
 	// 创建tcp监听
-	listen, err := net.Listen("tcp", ":18081")
+	listen, err := net.Listen("tcp", address)
 	if err != nil {
 		grpclog.Fatalf("failed to listen: %v", err)
 	}
@@ -30,12 +25,4 @@ func RunGrpcCanal() {
 		return
 	}
 
-}
-
-func (s *MyCanalServer) SubscribeRegexTable(req *mycanal.SubscribeTableRequest,
-	stream mycanal.MyCanalService_SubscribeRegexTableServer) error {
-	// 这里可以实现具体的逻辑
-	// 例如，发送一些事件到客户端
-	slog.Info("接收到订阅请求", req.TableNameRegex)
-	return nil
 }

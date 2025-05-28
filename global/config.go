@@ -22,6 +22,12 @@ type Config struct {
 		TableRegex string   `yaml:"table_regex"`
 		Rules      []string `yaml:"rules"`
 	} `yaml:"watch_handlers"`
+	Web struct {
+		Addr string `yaml:"addr"`
+	}
+	GRPC struct {
+		Addr string `yaml:"addr"`
+	}
 }
 
 // LoadConfig 加载配置文件
