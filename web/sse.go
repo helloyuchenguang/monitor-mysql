@@ -9,15 +9,15 @@ import (
 	"net/http"
 )
 
-// SSEClient 代表一个客户端连接
-type SSEClient struct {
+// ChannelClient 代表一个客户端连接
+type ChannelClient struct {
 	ID   string
 	Chan chan []byte
 }
 
 // NewSSEClient 创建一个新的SSE客户端
-func NewSSEClient() *SSEClient {
-	return &SSEClient{
+func NewSSEClient() *ChannelClient {
+	return &ChannelClient{
 		// 使用 github.com/google/uuid
 		ID: uuid.New().String(),
 		// 带缓冲防止阻塞
@@ -27,13 +27,13 @@ func NewSSEClient() *SSEClient {
 
 // SSEServer 代表一个SSE服务器
 type SSEServer struct {
-	clients cmap.ConcurrentMap[string, *SSEClient]
+	clients cmap.ConcurrentMap[string, *ChannelClient]
 }
 
 // NewSSEServer  监控处理器接口
 func NewSSEServer() *SSEServer {
 	return &SSEServer{
-		clients: cmap.New[*SSEClient](),
+		clients: cmap.New[*ChannelClient](),
 	}
 }
 
