@@ -6,12 +6,12 @@ import (
 	"monitormysql/global/mevent/edit"
 )
 
-const ruleName = "SSERule"
+const RuleName = "SSERule"
 
 // 自动注册
 func init() {
 	slog.Info("自动注册 SSE 规则处理器")
-	global.RegisterRule(ruleName, edit.NewServer[[]byte]())
+	global.RegisterRule(RuleName, edit.NewServer[[]byte]())
 }
 
 // TplNodeModel 模板节点模型
