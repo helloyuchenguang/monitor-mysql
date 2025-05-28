@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+
+//option java_multiple_files = true;
+//option java_package = "com.ycg.sbgrpc.grpc.mycanal";
+option java_outer_classname = "MyCanalProto";
+option go_package = "api/mrpc";
+
+package mycanal;
+
+// 订阅表格请求
+message SubscribeTableRequest {
+  // 表名正则表达式 dev_db.node*
+  string tableNameRegex = 1;
+}
+
+enum CanalEventType {
+  UNKNOWN = 0; // 未知事件
+  INSERT = 1; // 插入事件
+  UPDATE = 2; // 更新事件
+  DELETE = 3; // 删除事件
+}
+
+// 事件表格行回复
+message EventTableRowReply {
+  // 事件类型
+  CanalEventType eventType = 1;
+  // 表结构
+  TableStructReply rowStruct = 2;
+  // 主键值
+  string pkValue = 3;
+  // 插入信息
+  EventInsertInfoReply insertInfo = 4;
+  // 删除信息
+  EventDeleteInfoReply deleteInfo = 5;
+  // 修改信息
+  EventUpdateInfoReply updateInfo = 6;
+}
+
+// 表结构信息
+message TableStructReply{
+  // 数据库名称
+  string database = 2;
+  // 表名
+  string table = 3;
+}
+
+// 字段信息
+message ColumnInfoReply {
+  // 字段名
+  string columnName = 1;
+  // 字段类型
+  string columnType = 2;
+}
+
+// 插入信息
+message EventInsertInfoReply{
+  map<string, string> rowData = 1;
+}
+
+// 更新信息
+message EventUpdateInfoReply{
+  // key: 字段名, value: 字段值
+  map<string, string> beforeRowData = 1;
+  // key: 字段名, value: 字段值
+  map<string, string> afterRowData = 2;
+  // 变更字段值
+  map<string, ColumnValueReply> editColumns = 3; // 字段信息
+}
+
+// 字段值变更信息
+message ColumnValueReply {
+  // 修改前
+  string beforeValue = 1;
+  // 修改后
+  string afterValue = 2;
+}
+
+// 删除信息
+message EventDeleteInfoReply{
+  // 删除的行数据
+  map<string, string> rowData = 2;
+}
+
+
+// gRPC服务定义
+service MyCanalService {
+  // 服务端流式rpc
+  rpc subscribeRegexTable(SubscribeTableRequest) returns (stream EventTableRowReply);
+}
