@@ -11,7 +11,9 @@ database:
 
 watch_handlers:
   - table: "bigdata\\.user_info"
-    handler: TplNodeHandler
+    rules:
+#      - GRPCRule
+      - SSERule
 
 web:
   addr: ":10820"
