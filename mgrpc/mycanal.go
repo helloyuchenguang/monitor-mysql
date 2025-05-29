@@ -11,14 +11,11 @@ type MyCanalServer struct {
 }
 
 func (s *MyCanalServer) SubscribeRegexTable(req *mycanal.SubscribeTableRequest, stream mycanal.MyCanalService_SubscribeRegexTableServer) error {
-	rs := global.GetRule[mycanal.EventTableRowReply](RuleName)
+	rs := global.GetRule[*mycanal.EventTableRowReply](RuleName)
 	slog.Info("接收到订阅的表名regex", slog.String("regex", req.TableNameRegex))
 
-	client := rs.NewClient()
+	client := rs.PutNewClient()
 	clientID := client.ID
-	rs.PutClient(client)
-	slog.Info("新客户端连接", slog.String("clientID", clientID))
-
 	defer rs.RemoveClientByID(clientID)
 
 	for {
@@ -31,7 +28,7 @@ func (s *MyCanalServer) SubscribeRegexTable(req *mycanal.SubscribeTableRequest, 
 				slog.Info("通道关闭", slog.String("clientID", clientID))
 				return nil
 			}
-			if err := stream.Send(&evt); err != nil {
+			if err := stream.Send(evt); err != nil {
 				slog.Error("grpc推送消息失败", slog.String("clientID", clientID), slog.Any("error", err))
 				return err
 			}

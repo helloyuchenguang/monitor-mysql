@@ -14,7 +14,7 @@ type SourceData struct {
 }
 
 // SourceDataToEditInfo 从行数据中获取更新信息
-func SourceDataToEditInfo(sd *SourceData) UpdateInfo {
+func SourceDataToEditInfo(sd *SourceData) *UpdateInfo {
 	// 更新列
 	edits := make(map[string]UpdateValueInfo)
 	cols := sd.Cols
@@ -63,18 +63,18 @@ func SourceDataToEditInfo(sd *SourceData) UpdateInfo {
 			}
 		}
 	}
-	ui := UpdateInfo{
+	return &UpdateInfo{
 		TableSchema: sd.TableSchema,
 		TableName:   sd.TableName,
 		DataUpdate:  dataUpdate,
 		ColumnMap:   columnMap,
 		Edits:       edits,
 	}
-	return ui
+
 }
 
 // SourceDataToGrpcReply 从行数据中获取更新信息
-func SourceDataToGrpcReply(sd *SourceData) mycanal.EventTableRowReply {
+func SourceDataToGrpcReply(sd *SourceData) *mycanal.EventTableRowReply {
 	cols := sd.Cols
 	// 列信息
 	columns := make([]*mycanal.ColumnInfoReply, len(cols))
@@ -124,7 +124,7 @@ func SourceDataToGrpcReply(sd *SourceData) mycanal.EventTableRowReply {
 			}
 		}
 	}
-	return mycanal.EventTableRowReply{
+	return &mycanal.EventTableRowReply{
 		EventType: mycanal.CanalEventType_UPDATE,
 		RowStruct: &mycanal.TableStructReply{
 			Schema: sd.TableSchema,

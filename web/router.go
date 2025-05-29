@@ -31,13 +31,9 @@ func StartServer(addr string) {
 		}
 
 		// 创建一个新的客户端
-		newClient := rs.NewClient()
+		newClient := rs.PutNewClient()
 		clientID := newClient.ID
 		ch := newClient.Chan
-		// 存储客户端到服务器
-		rs.PutClient(newClient)
-		slog.Info("新客户端连接", slog.String("clientID", clientID))
-
 		// 关闭通道
 		defer rs.RemoveClientByID(clientID)
 

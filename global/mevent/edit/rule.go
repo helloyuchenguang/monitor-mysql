@@ -9,7 +9,7 @@ import (
 )
 
 type ChannelReplyType interface {
-	[]byte | mycanal.EventTableRowReply
+	[]byte | *mycanal.EventTableRowReply
 }
 
 type ChannelClient[T ChannelReplyType] struct {
@@ -28,19 +28,17 @@ func NewServer[T ChannelReplyType]() *RuleServer[T] {
 	}
 }
 
-// NewClient 创建一个新的SSE客户端
-func (rs *RuleServer[T]) NewClient() *ChannelClient[T] {
-	return &ChannelClient[T]{
+// PutNewClient 创建一个新的SSE客户端
+func (rs *RuleServer[T]) PutNewClient() *ChannelClient[T] {
+	cc := &ChannelClient[T]{
 		// 使用 github.com/google/uuid
 		ID: uuid.New().String(),
 		// 带缓冲防止阻塞
-		Chan: make(chan T, 1000),
+		Chan: make(chan T, 100_000),
 	}
-}
-
-func (rs *RuleServer[T]) PutClient(client *ChannelClient[T]) {
-	rs.clients.Set(client.ID, client)
-	slog.Info("添加新客户端", slog.String("clientID", client.ID))
+	rs.clients.Set(cc.ID, cc)
+	slog.Info("添加新客户端", slog.String("clientID", cc.ID))
+	return cc
 }
 
 func (rs *RuleServer[T]) RemoveClientByID(clientID string) {
@@ -61,28 +59,33 @@ func (rs *RuleServer[T]) OnChange(sd *SourceData) error {
 
 func (rs *RuleServer[T]) convert(sd *SourceData) T {
 	var data T
-	if _, ok := any(data).(mycanal.EventTableRowReply); ok {
+	if _, ok := any(data).(*mycanal.EventTableRowReply); ok {
 		return any(SourceDataToGrpcReply(sd)).(T)
-	} else {
+	}
+
+	if _, ok := any(data).([]byte); ok {
 		// 否则使用 []byte 类型
 		bs, err := json.Marshal(SourceDataToEditInfo(sd))
 		if err != nil {
 			slog.Error("JSON 编码错误", slog.Any("error", err))
 			return data // 返回零值
 		}
-		data = any(bs).(T)
+		return any(bs).(T)
 	}
-	return data
+	slog.Error("未知数据类型", slog.Any("dataType", data))
+	return data // 返回零值
 }
 
 // Broadcast 广播消息给所有客户端
 func (rs *RuleServer[T]) Broadcast(data T) {
 	for _, client := range rs.clients.Items() {
-		select {
-		case client.Chan <- data:
-		default:
-			// 防止阻塞：可选择丢弃消息或断开慢客户端
-			slog.Warn("丢弃消息", slog.String("clientID", client.ID))
-		}
+		go func() {
+			select {
+			case client.Chan <- data:
+			default:
+				// 防止阻塞：可选择丢弃消息或断开慢客户端
+				slog.Warn("丢弃消息", slog.String("clientID", client.ID))
+			}
+		}()
 	}
 }
