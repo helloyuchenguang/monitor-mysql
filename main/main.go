@@ -2,17 +2,17 @@ package main
 
 import (
 	"monitormysql"
-	"monitormysql/mrpc"
+	"monitormysql/mgrpc"
 	"monitormysql/web"
 	_ "monitormysql/web"
 )
 
 func main() {
 	// monitor-mysql
-	cnf, err := monitormysql.Run("./config/config-5900x.yml")
+	cnf, err := monitormysql.Run("./config/config.yml")
 	if err != nil {
 		panic(err)
 	}
-	go mrpc.RunGrpcCanal(cnf.GRPC.Addr)
+	go mgrpc.RunGrpcCanal(cnf.GRPC.Addr)
 	web.StartServer(cnf.Web.Addr)
 }

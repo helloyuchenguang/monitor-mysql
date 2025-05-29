@@ -1,10 +1,10 @@
-package mrpc
+package mgrpc
 
 import (
 	"log/slog"
 	"monitormysql/global"
 	"monitormysql/global/mevent/edit"
-	"monitormysql/mrpc/api/mycanal"
+	"monitormysql/mgrpc/api/mycanal"
 )
 
 const RuleName = "GRPCRule"

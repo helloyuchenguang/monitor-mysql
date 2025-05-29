@@ -1,9 +1,9 @@
-package mrpc
+package mgrpc
 
 import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
-	"monitormysql/mrpc/api/mycanal"
+	"monitormysql/mgrpc/api/mycanal"
 	"net"
 )
 

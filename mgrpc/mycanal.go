@@ -1,9 +1,9 @@
-package mrpc
+package mgrpc
 
 import (
 	"log/slog"
 	"monitormysql/global"
-	"monitormysql/mrpc/api/mycanal"
+	"monitormysql/mgrpc/api/mycanal"
 )
 
 type MyCanalServer struct {

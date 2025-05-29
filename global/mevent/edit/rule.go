@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 	cmap "github.com/orcaman/concurrent-map/v2"
 	"log/slog"
-	"monitormysql/mrpc/api/mycanal"
+	"monitormysql/mgrpc/api/mycanal"
 )
 
 type ChannelReplyType interface {
