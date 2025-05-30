@@ -9,10 +9,10 @@ import (
 
 func main() {
 	// monitor-mysql
-	cnf, err := monitor.Run("./properties/properties.yml")
+	cnf, err := monitor.Run("./resources/resources.yml")
 	if err != nil {
 		panic(err)
 	}
-	go mgrpc.RunGrpcCanal(cnf.GRPC.Addr)
+	go grpc.RunGrpcCanal(cnf.GRPC.Addr)
 	web.StartServer(cnf.Web.Addr)
 }
