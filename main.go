@@ -1,7 +1,7 @@
 package main
 
 import (
-	"main/mgrpc"
+	"main/grpc"
 	"main/monitor"
 	"main/web"
 	_ "main/web"

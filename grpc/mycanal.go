@@ -3,7 +3,7 @@ package mgrpc
 import (
 	"log/slog"
 	"main/common"
-	"main/mgrpc/api/mycanal"
+	"main/grpc/api/mycanal"
 )
 
 type MyCanalServer struct {

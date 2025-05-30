@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"main/common"
 	"main/common/event/edit"
-	"main/mgrpc/api/mycanal"
+	"main/grpc/api/mycanal"
 )
 
 const RuleName = "GRPCRule"

@@ -8,6 +8,7 @@ type ClientService struct {
 	Client *meilisearch.ServiceManager
 }
 
+// ClientConfig meilisearch 客户端配置
 type ClientConfig struct {
 	Addr   string
 	APIKey string

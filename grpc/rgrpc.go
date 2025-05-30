@@ -3,7 +3,7 @@ package mgrpc
 import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
-	"main/mgrpc/api/mycanal"
+	"main/grpc/api/mycanal"
 	"net"
 )
 
