@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/samber/lo"
 	"gopkg.in/yaml.v3"
 	"log/slog"
 	"os"
@@ -53,6 +54,10 @@ func LoadConfig(cfgFile string) Config {
 	decoder := yaml.NewDecoder(f)
 	if err := decoder.Decode(&cfg); err != nil {
 		panic("无法解析配置文件: " + cfgFile)
+	}
+	// rules 去重
+	for _, handler := range cfg.WatchHandlers {
+		handler.Rules = lo.Uniq(handler.Rules)
 	}
 	slog.Info(fmt.Sprintf("读取配置文件: %-v", cfg))
 	return cfg

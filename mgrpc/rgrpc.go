@@ -7,16 +7,16 @@ import (
 	"net"
 )
 
-func RunGrpcCanal(cfg *Config) {
+func (g *GRPCRuleService) RunGrpcCanal() {
 	// 创建tcp监听
-	listen, err := net.Listen("tcp", cfg.Addr)
+	listen, err := net.Listen("tcp", g.cfg.Addr)
 	if err != nil {
 		grpclog.Fatalf("grpc tcp 错误: %v", err)
 	}
 	// 创建grpc服务器
 	s := grpc.NewServer()
 	// 实例化MyCanalServer
-	server := MyCanalServer{}
+	server := MyCanalServer{grpcRuleServer: g}
 	// 注册MyCanalServer
 	mycanal.RegisterMyCanalServiceServer(s, &server)
 	// 启动grpc服务器

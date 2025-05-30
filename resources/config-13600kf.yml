@@ -1,0 +1,21 @@
+database:
+  addr: 192.168.70.128:3308
+  user: root
+  password: 123456
+  flavor: mysql
+  server_id: 1001
+  # 禁用 mysqldump
+  dump_execution_path: ""
+  include_table_regex:
+    - "videos\\.*"
+
+watch_handlers:
+  - table: "videos\\.*"
+    rules:
+      - GRPCRule
+      - SSERule
+
+web:
+  addr: ":10820"
+grpc:
+  addr: ":10821"

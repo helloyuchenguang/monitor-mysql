@@ -11,18 +11,73 @@ import (
 	"regexp"
 )
 
-type MonitorService struct {
+type CanalMonitorService struct {
+	cfg      *Config
 	SSERule  *web.SSERuleService
-	grpcRule *mgrpc.GRPCRuleServer
+	grpcRule *mgrpc.GRPCRuleService
 }
 
-func (m *MonitorService) NewMyEventHandler(cfg *config.Config) *MyEventHandler {
-	canalConfig := NewCanalConfig(cfg)
+type WatchHandlers []struct {
+	TableRegex string
+	Rules      []string
+}
+
+type Database struct {
+	Addr              string
+	User              string
+	Password          string
+	Flavor            string
+	ServerID          uint32
+	DumpExecutionPath string
+	IncludeTableRegex []string
+}
+
+type Config struct {
+	Database      Database
+	WatchHandlers WatchHandlers
+}
+
+func NewMonitorConfig(cfg *config.Config) *Config {
+	cfgWatchHandlers := cfg.WatchHandlers
+	// 创建配置
+	watchHandlers := make(WatchHandlers, len(cfgWatchHandlers))
+	for i, handler := range cfgWatchHandlers {
+		watchHandlers[i] = struct {
+			TableRegex string
+			Rules      []string
+		}{
+			TableRegex: handler.TableRegex,
+			Rules:      handler.Rules,
+		}
+	}
+	return &Config{
+		Database: Database{
+			Addr:              cfg.Database.Addr,
+			User:              cfg.Database.User,
+			Password:          cfg.Database.Password,
+			Flavor:            cfg.Database.Flavor,
+			ServerID:          cfg.Database.ServerID,
+			DumpExecutionPath: cfg.Database.DumpExecutionPath,
+			IncludeTableRegex: cfg.Database.IncludeTableRegex,
+		},
+		WatchHandlers: watchHandlers,
+	}
+}
+
+func NewMonitorService(cfg config.Config, sseRule *web.SSERuleService, grpcRule *mgrpc.GRPCRuleService) *CanalMonitorService {
+	return &CanalMonitorService{
+		cfg:      NewMonitorConfig(&cfg),
+		SSERule:  sseRule,
+		grpcRule: grpcRule,
+	}
+}
+
+func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 	// 把schema和table正则合成一个正则表达式列表给IncludeTableRegex
 	var compiledRegexps []*regexp.Regexp
 	// 表格正则对应的监控规则
-	rules := make(map[int][]edit.MonitorRuler, len(cfg.WatchHandlers))
-	for i, wt := range cfg.WatchHandlers {
+	rules := make(map[int][]edit.MonitorRuler, len(m.cfg.WatchHandlers))
+	for i, wt := range m.cfg.WatchHandlers {
 		r, err := regexp.Compile(wt.TableRegex)
 		if err != nil {
 			panic("编译正则失败: " + err.Error())
@@ -35,47 +90,41 @@ func (m *MonitorService) NewMyEventHandler(cfg *config.Config) *MyEventHandler {
 			continue
 		} else {
 			tableRules := make([]edit.MonitorRuler, len(wt.Rules))
-			for _, ruleName := range wt.Rules {
+			for j, ruleName := range wt.Rules {
 				switch ruleName {
 				case web.RuleName:
-					tableRules = append(tableRules, m.SSERule.Rule)
+					tableRules[j] = m.SSERule.Rule
 				case mgrpc.RuleName:
-					tableRules = append(tableRules, m.grpcRule.Rule)
+					tableRules[j] = m.grpcRule.Rule
 				default:
 					panic("规则 " + ruleName + " 不存在,请检查配置")
 				}
 			}
+			rules[i] = tableRules
 		}
 	}
-	return &MyEventHandler{
+	return &CustomEventHandler{
 		WatchRegexps: compiledRegexps,
+		Rules:        rules,
 	}
 }
 
-func NewMonitorService(cfg config.Config, sseRule *web.SSERuleService, grpcRule *mgrpc.GRPCRuleServer) *MonitorService {
-
-	// 初始化SSE服务
-	return &MonitorService{
-		SSERule:  sseRule,
-		grpcRule: grpcRule,
-	}
-}
-
-// NewCanalConfig 根据配置文件,创建canal.Config
-func NewCanalConfig(cfg *config.Config) *canal.Config {
+// newCanalConfig 根据配置文件,创建canal.Config
+func (m *CanalMonitorService) newCanalConfig() *canal.Config {
 	canalCfg := canal.NewDefaultConfig()
-	canalCfg.Addr = cfg.Database.Addr
-	canalCfg.User = cfg.Database.User
-	canalCfg.Password = cfg.Database.Password
-	canalCfg.Flavor = cfg.Database.Flavor
-	canalCfg.ServerID = cfg.Database.ServerID
-	canalCfg.Dump.ExecutionPath = cfg.Database.DumpExecutionPath
-	canalCfg.IncludeTableRegex = cfg.Database.IncludeTableRegex
+	canalCfg.Addr = m.cfg.Database.Addr
+	canalCfg.User = m.cfg.Database.User
+	canalCfg.Password = m.cfg.Database.Password
+	canalCfg.Flavor = m.cfg.Database.Flavor
+	canalCfg.ServerID = m.cfg.Database.ServerID
+	canalCfg.Dump.ExecutionPath = m.cfg.Database.DumpExecutionPath
+	canalCfg.IncludeTableRegex = m.cfg.Database.IncludeTableRegex
 	return canalCfg
 }
 
 // StartCanal 启动canal
-func StartCanal(canalCfg *canal.Config, handler *MyEventHandler) {
+func (m *CanalMonitorService) StartCanal() {
+	canalCfg := m.newCanalConfig()
 	// 创建canal实例
 	c, err := canal.NewCanal(canalCfg)
 	if err != nil {
@@ -83,7 +132,7 @@ func StartCanal(canalCfg *canal.Config, handler *MyEventHandler) {
 		return
 	}
 	// 设置事件处理器
-	c.SetEventHandler(handler)
+	c.SetEventHandler(m.newMyEventHandler())
 
 	// 获取当前的binlog位置
 	pos, err := c.GetMasterPos()

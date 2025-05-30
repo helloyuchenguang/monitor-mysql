@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log/slog"
-	"main/common"
 	"net/http"
 )
 
 // StartServer 启动Web服务器
-func StartServer(cfg *Config) {
+func (w *SSERuleService) StartServer() {
 	// gin web
 	router := gin.Default()
 	router.Static("/static", "./static")
@@ -21,7 +20,7 @@ func StartServer(cfg *Config) {
 
 	// SSE路由
 	router.GET("/sse", func(c *gin.Context) {
-		rs := common.GetRule[[]byte](RuleName)
+		rs := w.Rule
 
 		writer := c.Writer
 		flusher, ok := writer.(http.Flusher)
@@ -58,8 +57,8 @@ func StartServer(cfg *Config) {
 			}
 		}
 	})
-
-	err := router.Run(cfg.Addr)
+	slog.Info("页面地址: http://localhost" + w.cfg.Addr)
+	err := router.Run(w.cfg.Addr)
 	if err != nil {
 		return
 	}

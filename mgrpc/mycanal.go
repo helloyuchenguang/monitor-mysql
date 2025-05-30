@@ -2,16 +2,16 @@ package mgrpc
 
 import (
 	"log/slog"
-	"main/common"
 	"main/mgrpc/api/mycanal"
 )
 
 type MyCanalServer struct {
 	mycanal.UnimplementedMyCanalServiceServer
+	grpcRuleServer *GRPCRuleService
 }
 
 func (s *MyCanalServer) SubscribeRegexTable(req *mycanal.SubscribeTableRequest, stream mycanal.MyCanalService_SubscribeRegexTableServer) error {
-	rs := common.GetRule[*mycanal.EventTableRowReply](RuleName)
+	rs := s.grpcRuleServer.Rule
 	slog.Info("接收到订阅的表名regex", slog.String("regex", req.TableNameRegex))
 
 	client := rs.PutNewClient()

@@ -8,14 +8,14 @@ import (
 	"regexp"
 )
 
-type MyEventHandler struct {
+type CustomEventHandler struct {
 	canal.DummyEventHandler
 	WatchRegexps []*regexp.Regexp
 	Rules        map[int][]edit.MonitorRuler
 }
 
 // isWatched 判断表是否被监控
-func (h *MyEventHandler) isWatched(schema, table string) ([]edit.MonitorRuler, bool) {
+func (h *CustomEventHandler) isWatched(schema, table string) ([]edit.MonitorRuler, bool) {
 	fullName := fmt.Sprintf("%s.%s", schema, table)
 	for i, r := range h.WatchRegexps {
 		if r.MatchString(fullName) {
@@ -26,7 +26,7 @@ func (h *MyEventHandler) isWatched(schema, table string) ([]edit.MonitorRuler, b
 }
 
 // OnRow 处理行事件
-func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
+func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 	// 判断表是否被监控
 	tableSchema := e.Table.Schema
 	tableName := e.Table.Name

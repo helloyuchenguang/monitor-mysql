@@ -9,19 +9,19 @@ import (
 
 func main() {
 	// monitor-mysql
-	cfg := config.LoadConfig("./resources/config.yml")
+	cfg := config.LoadConfig("./resources/config-13600kf.yml")
 	sseRule, grpcRule := registryRuleService(&cfg)
-	monitor.NewMonitorService(cfg, sseRule, grpcRule)
+	monitor.NewMonitorService(cfg, sseRule, grpcRule).StartCanal()
 }
 
-func registryRuleService(config *config.Config) (*web.SSERuleService, *mgrpc.GRPCRuleServer) {
+func registryRuleService(config *config.Config) (*web.SSERuleService, *mgrpc.GRPCRuleService) {
 	watchHandlers := config.WatchHandlers
 	if len(watchHandlers) == 0 {
 		return nil, nil
 	}
 	ruleNameSet := make(map[string]bool, 2)
 	var sseRule *web.SSERuleService
-	var grpcRule *mgrpc.GRPCRuleServer
+	var grpcRule *mgrpc.GRPCRuleService
 	for _, handler := range watchHandlers {
 		for _, ruleName := range handler.Rules {
 			if _, exists := ruleNameSet[ruleName]; !exists {
@@ -29,15 +29,11 @@ func registryRuleService(config *config.Config) (*web.SSERuleService, *mgrpc.GRP
 				switch ruleName {
 				case web.RuleName:
 					if sseRule == nil {
-						sseRule = web.NewSSERuleService(web.Config{
-							Addr: config.Web.Addr,
-						})
+						sseRule = web.NewWebSSERuleService(config)
 					}
 				case mgrpc.RuleName:
 					if grpcRule == nil {
-						grpcRule = mgrpc.NewGRPCRuleServer(mgrpc.Config{
-							Addr: config.GRPC.Addr,
-						})
+						grpcRule = mgrpc.NewGRPCRuleService(config)
 					}
 				default:
 					panic("未知规则: " + ruleName)

@@ -5,20 +5,21 @@ package main
 
 import (
 	"github.com/google/wire"
+	"main/common/config"
 	"main/meili"
 	"main/mgrpc"
 	"main/web"
 )
 
 // 初始化SSE服务
-func InitSSEService(cfg web.Config) *web.SSERuleService {
-	wire.Build(web.NewSSERuleService)
+func InitSSEService(cfg *config.Config) *web.SSERuleService {
+	wire.Build(web.NewWebSSERuleService)
 	return nil
 }
 
 // 初始化SSE服务
-func InitGRPCRuleService(cfg mgrpc.Config) *mgrpc.GRPCRuleServer {
-	wire.Build(mgrpc.NewGRPCRuleServer)
+func InitGRPCRuleService(cfg *config.Config) *mgrpc.GRPCRuleService {
+	wire.Build(mgrpc.NewGRPCRuleService)
 	return nil
 }
 
