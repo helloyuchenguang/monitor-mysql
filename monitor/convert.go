@@ -1,8 +1,8 @@
-package monitormysql
+package monitor
 
 import (
 	"fmt"
-	"monitormysql/global/mevent/edit"
+	"main/global/mevent/edit"
 	"reflect"
 	"strings"
 )

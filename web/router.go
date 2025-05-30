@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log/slog"
-	"monitormysql/global"
+	"main/global"
 	"net/http"
 )
 
@@ -16,7 +16,7 @@ func StartServer(addr string) {
 
 	// 设置index.html为默认页面
 	router.GET("/", func(c *gin.Context) {
-		c.File("./static/index.html")
+		c.File("./web/static/index.html")
 	})
 
 	// SSE路由

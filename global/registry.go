@@ -1,7 +1,7 @@
 package global
 
 import (
-	"monitormysql/global/mevent/edit"
+	"main/global/mevent/edit"
 	"sync"
 )
 

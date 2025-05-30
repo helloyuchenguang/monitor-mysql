@@ -2,9 +2,9 @@ package mgrpc
 
 import (
 	"log/slog"
-	"monitormysql/global"
-	"monitormysql/global/mevent/edit"
-	"monitormysql/mgrpc/api/mycanal"
+	"main/global"
+	"main/global/mevent/edit"
+	"main/mgrpc/api/mycanal"
 )
 
 const RuleName = "GRPCRule"

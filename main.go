@@ -1,16 +1,15 @@
 package main
 
 import (
-	"monitormysql"
-	"monitormysql/mgrpc"
-	"monitormysql/web"
-	_ "monitormysql/web"
+	"main/mgrpc"
+	"main/monitor"
+	"main/web"
+	_ "main/web"
 )
 
 func main() {
-
 	// monitor-mysql
-	cnf, err := monitormysql.Run("./config/config.yml")
+	cnf, err := monitor.Run("./config/config.yml")
 	if err != nil {
 		panic(err)
 	}

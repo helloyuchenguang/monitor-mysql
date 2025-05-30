@@ -1,11 +1,11 @@
 //go:build wireinject
 // +build wireinject
 
-package monitormysql
+package main
 
 import (
 	"github.com/google/wire"
-	"monitormysql/meili"
+	"main/meili"
 )
 
 func InitMeiliService(cfg meili.ClientConfig) *meili.ClientService {

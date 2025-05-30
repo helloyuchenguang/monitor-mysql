@@ -2,8 +2,8 @@ package web
 
 import (
 	"log/slog"
-	"monitormysql/global"
-	"monitormysql/global/mevent/edit"
+	"main/global"
+	"main/global/mevent/edit"
 )
 
 const RuleName = "SSERule"

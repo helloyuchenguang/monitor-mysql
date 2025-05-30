@@ -1,11 +1,11 @@
-package monitormysql
+package monitor
 
 import (
 	"fmt"
 	"github.com/go-mysql-org/go-mysql/canal"
 	"log/slog"
-	"monitormysql/global"
-	"monitormysql/global/mevent/edit"
+	"main/global"
+	"main/global/mevent/edit"
 	"regexp"
 )
 

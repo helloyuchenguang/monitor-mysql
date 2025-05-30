@@ -3,7 +3,7 @@ package edit
 import (
 	"fmt"
 	"github.com/go-mysql-org/go-mysql/schema"
-	"monitormysql/mgrpc/api/mycanal"
+	"main/mgrpc/api/mycanal"
 	"reflect"
 )
 
