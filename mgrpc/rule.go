@@ -3,7 +3,7 @@ package mgrpc
 import (
 	"log/slog"
 	"main/common"
-	"main/common/mevent/edit"
+	"main/common/event/edit"
 	"main/mgrpc/api/mycanal"
 )
 

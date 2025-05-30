@@ -5,7 +5,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/canal"
 	"log/slog"
 	"main/common"
-	edit2 "main/common/mevent/edit"
+	edit2 "main/common/event/edit"
 	"regexp"
 )
 
