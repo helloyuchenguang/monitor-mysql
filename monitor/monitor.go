@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/go-mysql-org/go-mysql/canal"
 	"log/slog"
-	"main/global"
-	"main/global/mevent/edit"
+	"main/common"
+	edit2 "main/common/mevent/edit"
 	"regexp"
 )
 
@@ -13,11 +13,11 @@ import (
 type MyEventHandler struct {
 	canal.DummyEventHandler
 	WatchRegexps []*regexp.Regexp
-	Rules        map[int][]*edit.MonitorRuler
+	Rules        map[int][]*edit2.MonitorRuler
 }
 
 // isWatched 判断表是否被监控
-func (h *MyEventHandler) isWatched(schema, table string) ([]*edit.MonitorRuler, bool) {
+func (h *MyEventHandler) isWatched(schema, table string) ([]*edit2.MonitorRuler, bool) {
 	fullName := fmt.Sprintf("%s.%s", schema, table)
 	for i, r := range h.WatchRegexps {
 		if r.MatchString(fullName) {
@@ -51,7 +51,7 @@ func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
 			after := e.Rows[i+1]
 			for _, rule := range rules {
 				go func() {
-					err := (*rule).OnChange(&edit.SourceData{
+					err := (*rule).OnChange(&edit2.SourceData{
 						TableSchema: tableSchema,
 						TableName:   tableName,
 						Cols:        cols,
@@ -69,9 +69,9 @@ func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
 }
 
 // Run 启动
-func Run(cfgFile string) (*global.Config, error) {
+func Run(cfgFile string) (*common.Config, error) {
 	// 加载配置文件
-	cfg, err := global.LoadConfig(cfgFile)
+	cfg, err := common.LoadConfig(cfgFile)
 	if err != nil {
 		return nil, err
 	}
@@ -111,11 +111,11 @@ func StartCanal(canalCfg *canal.Config, handler *MyEventHandler) {
 }
 
 // NewEventHandlerByConfig 根据配置文件,创建事件处理器
-func NewEventHandlerByConfig(cfg *global.Config) (*MyEventHandler, error) {
+func NewEventHandlerByConfig(cfg *common.Config) (*MyEventHandler, error) {
 	// 把schema和table正则合成一个正则表达式列表给IncludeTableRegex
 	var compiledRegexps []*regexp.Regexp
 	// 表格正则对应的监控规则
-	rules := make(map[int][]*edit.MonitorRuler, len(cfg.WatchHandlers))
+	rules := make(map[int][]*edit2.MonitorRuler, len(cfg.WatchHandlers))
 	for i, wt := range cfg.WatchHandlers {
 		r, err := regexp.Compile(wt.TableRegex)
 		if err != nil {
@@ -128,12 +128,12 @@ func NewEventHandlerByConfig(cfg *global.Config) (*MyEventHandler, error) {
 		// 如果没有规则,使用默认规则
 		if ruleSize == 0 {
 			slog.Error(fmt.Sprintf("表 %s 没有监控规则,使用默认监控规则", wt.TableRegex))
-			rules[i] = []*edit.MonitorRuler{global.GetDefaultRule()}
+			rules[i] = []*edit2.MonitorRuler{common.GetDefaultRule()}
 			continue
 		} else {
-			tableRules := make([]*edit.MonitorRuler, ruleSize)
+			tableRules := make([]*edit2.MonitorRuler, ruleSize)
 			for j, ruleName := range wt.Rules {
-				rule, ok := global.GetRuleByName(ruleName)
+				rule, ok := common.GetRuleByName(ruleName)
 				if !ok {
 					slog.Error(fmt.Sprintf("规则 %s 不存在,请检查配置", ruleName))
 					return nil, fmt.Errorf("rule %s not found", ruleName)
@@ -152,7 +152,7 @@ func NewEventHandlerByConfig(cfg *global.Config) (*MyEventHandler, error) {
 }
 
 // NewCanalConfigByConfig 根据配置文件,创建canal.Config
-func NewCanalConfigByConfig(cfg *global.Config) *canal.Config {
+func NewCanalConfigByConfig(cfg *common.Config) *canal.Config {
 	canalCfg := canal.NewDefaultConfig()
 	canalCfg.Addr = cfg.Database.Addr
 	canalCfg.User = cfg.Database.User

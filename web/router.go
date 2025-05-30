@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log/slog"
-	"main/global"
+	"main/common"
 	"net/http"
 )
 
@@ -21,7 +21,7 @@ func StartServer(addr string) {
 
 	// SSE路由
 	router.GET("/sse", func(c *gin.Context) {
-		rs := global.GetRule[[]byte](RuleName)
+		rs := common.GetRule[[]byte](RuleName)
 
 		writer := c.Writer
 		flusher, ok := writer.(http.Flusher)

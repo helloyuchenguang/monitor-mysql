@@ -2,7 +2,7 @@ package monitor
 
 import (
 	"fmt"
-	"main/global/mevent/edit"
+	"main/common/mevent/edit"
 	"reflect"
 	"strings"
 )
