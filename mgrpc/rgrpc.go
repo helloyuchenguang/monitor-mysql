@@ -1,17 +1,17 @@
-package grpc
+package mgrpc
 
 import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
-	"main/grpc/api/mycanal"
+	"main/mgrpc/api/mycanal"
 	"net"
 )
 
-func RunGrpcCanal(address string) {
+func RunGrpcCanal(cfg *Config) {
 	// 创建tcp监听
-	listen, err := net.Listen("tcp", address)
+	listen, err := net.Listen("tcp", cfg.Addr)
 	if err != nil {
-		grpclog.Fatalf("failed to listen: %v", err)
+		grpclog.Fatalf("grpc tcp 错误: %v", err)
 	}
 	// 创建grpc服务器
 	s := grpc.NewServer()

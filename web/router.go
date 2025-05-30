@@ -9,7 +9,7 @@ import (
 )
 
 // StartServer 启动Web服务器
-func StartServer(addr string) {
+func StartServer(cfg *Config) {
 	// gin web
 	router := gin.Default()
 	router.Static("/static", "./static")
@@ -59,7 +59,7 @@ func StartServer(addr string) {
 		}
 	})
 
-	err := router.Run(addr)
+	err := router.Run(cfg.Addr)
 	if err != nil {
 		return
 	}

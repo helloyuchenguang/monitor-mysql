@@ -1,9 +1,9 @@
-package grpc
+package mgrpc
 
 import (
 	"log/slog"
 	"main/common"
-	"main/grpc/api/mycanal"
+	"main/mgrpc/api/mycanal"
 )
 
 type MyCanalServer struct {

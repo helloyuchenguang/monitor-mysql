@@ -2,14 +2,23 @@ package web
 
 import (
 	"log/slog"
-	"main/common"
 	"main/common/event/edit"
 )
 
 const RuleName = "SSERule"
 
-// 自动注册
-func init() {
-	slog.Info("自动注册 %s 规则处理器", RuleName)
-	common.RegisterRule(RuleName, edit.NewServer[[]byte]())
+type Config struct {
+	Addr string `json:"addr"` // SSE服务地址
+}
+
+// SSERuleService rule服务的实体
+type SSERuleService struct {
+	Rule *edit.RuleServer[[]byte]
+}
+
+// NewSSERuleService 创建一个新的SSE服务实例
+func NewSSERuleService(cfg Config) *SSERuleService {
+	slog.Info("注册SSE规则服务", slog.String("addr", cfg.Addr))
+	StartServer(&cfg)
+	return &SSERuleService{Rule: edit.NewServer[[]byte]()}
 }
