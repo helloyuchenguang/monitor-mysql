@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// monitor-mysql
-	cnf, err := monitor.Run("./config/config.yml")
+	cnf, err := monitor.Run("./properties/properties.yml")
 	if err != nil {
 		panic(err)
 	}

@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"main/common"
 	"main/common/config"
-	edit2 "main/common/event/edit"
+	"main/common/event/edit"
 	"regexp"
 )
 
@@ -14,11 +14,11 @@ import (
 type MyEventHandler struct {
 	canal.DummyEventHandler
 	WatchRegexps []*regexp.Regexp
-	Rules        map[int][]*edit2.MonitorRuler
+	Rules        map[int][]*edit.MonitorRuler
 }
 
 // isWatched 判断表是否被监控
-func (h *MyEventHandler) isWatched(schema, table string) ([]*edit2.MonitorRuler, bool) {
+func (h *MyEventHandler) isWatched(schema, table string) ([]*edit.MonitorRuler, bool) {
 	fullName := fmt.Sprintf("%s.%s", schema, table)
 	for i, r := range h.WatchRegexps {
 		if r.MatchString(fullName) {
@@ -52,7 +52,7 @@ func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
 			after := e.Rows[i+1]
 			for _, rule := range rules {
 				go func() {
-					err := (*rule).OnChange(&edit2.SourceData{
+					err := (*rule).OnChange(&edit.SourceData{
 						TableSchema: tableSchema,
 						TableName:   tableName,
 						Cols:        cols,
@@ -116,7 +116,7 @@ func NewEventHandlerByConfig(cfg *config.Config) (*MyEventHandler, error) {
 	// 把schema和table正则合成一个正则表达式列表给IncludeTableRegex
 	var compiledRegexps []*regexp.Regexp
 	// 表格正则对应的监控规则
-	rules := make(map[int][]*edit2.MonitorRuler, len(cfg.WatchHandlers))
+	rules := make(map[int][]*edit.MonitorRuler, len(cfg.WatchHandlers))
 	for i, wt := range cfg.WatchHandlers {
 		r, err := regexp.Compile(wt.TableRegex)
 		if err != nil {
@@ -129,10 +129,10 @@ func NewEventHandlerByConfig(cfg *config.Config) (*MyEventHandler, error) {
 		// 如果没有规则,使用默认规则
 		if ruleSize == 0 {
 			slog.Error(fmt.Sprintf("表 %s 没有监控规则,使用默认监控规则", wt.TableRegex))
-			rules[i] = []*edit2.MonitorRuler{common.GetDefaultRule()}
+			rules[i] = []*edit.MonitorRuler{common.GetDefaultRule()}
 			continue
 		} else {
-			tableRules := make([]*edit2.MonitorRuler, ruleSize)
+			tableRules := make([]*edit.MonitorRuler, ruleSize)
 			for j, ruleName := range wt.Rules {
 				rule, ok := common.GetRuleByName(ruleName)
 				if !ok {
