@@ -12,10 +12,12 @@ database:
 watch_handlers:
   - table: "qucdin_lcoal\\.business_data_tpl_node_*"
     rules:
-#      - GRPCRule
+      #      - GRPCRule
       - SSERule
-
 web:
   addr: ":10820"
 grpc:
   addr: ":10821"
+meili_search:
+  addr: "http://192.168.60.10:7700"
+  api_key: "root123456"

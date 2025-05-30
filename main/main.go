@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+
 	// monitor-mysql
 	cnf, err := monitormysql.Run("./config/config.yml")
 	if err != nil {

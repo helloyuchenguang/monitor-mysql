@@ -28,6 +28,10 @@ type Config struct {
 	GRPC struct {
 		Addr string `yaml:"addr"`
 	}
+	MeiliSearch struct {
+		Addr   string `yaml:"addr"`
+		APIKey string `yaml:"api_key"`
+	} `yaml:"meili_search"`
 }
 
 // LoadConfig 加载配置文件
