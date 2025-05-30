@@ -1,4 +1,4 @@
-package common
+package config
 
 import (
 	"fmt"
@@ -41,6 +41,7 @@ func LoadConfig(cfgFile string) (Config, error) {
 		slog.Error(fmt.Sprintf("打开配置文件失败: %v", err))
 		return Config{}, err
 	}
+	// 确保在函数结束时关闭文件
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {

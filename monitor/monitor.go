@@ -5,6 +5,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/canal"
 	"log/slog"
 	"main/common"
+	"main/common/config"
 	edit2 "main/common/event/edit"
 	"regexp"
 )
@@ -69,9 +70,9 @@ func (h *MyEventHandler) OnRow(e *canal.RowsEvent) error {
 }
 
 // Run 启动
-func Run(cfgFile string) (*common.Config, error) {
+func Run(cfgFile string) (*config.Config, error) {
 	// 加载配置文件
-	cfg, err := common.LoadConfig(cfgFile)
+	cfg, err := config.LoadConfig(cfgFile)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +112,7 @@ func StartCanal(canalCfg *canal.Config, handler *MyEventHandler) {
 }
 
 // NewEventHandlerByConfig 根据配置文件,创建事件处理器
-func NewEventHandlerByConfig(cfg *common.Config) (*MyEventHandler, error) {
+func NewEventHandlerByConfig(cfg *config.Config) (*MyEventHandler, error) {
 	// 把schema和table正则合成一个正则表达式列表给IncludeTableRegex
 	var compiledRegexps []*regexp.Regexp
 	// 表格正则对应的监控规则
@@ -152,7 +153,7 @@ func NewEventHandlerByConfig(cfg *common.Config) (*MyEventHandler, error) {
 }
 
 // NewCanalConfigByConfig 根据配置文件,创建canal.Config
-func NewCanalConfigByConfig(cfg *common.Config) *canal.Config {
+func NewCanalConfigByConfig(cfg *config.Config) *canal.Config {
 	canalCfg := canal.NewDefaultConfig()
 	canalCfg.Addr = cfg.Database.Addr
 	canalCfg.User = cfg.Database.User
