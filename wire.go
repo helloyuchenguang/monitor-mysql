@@ -17,7 +17,7 @@ func InitSSEService(cfg *config.Config) *web.SSERuleService {
 	return nil
 }
 
-// 初始化SSE服务
+// 初始化GRPC服务
 func InitGRPCRuleService(cfg *config.Config) *mgrpc.GRPCRuleService {
 	wire.Build(mgrpc.NewGRPCRuleService)
 	return nil
@@ -27,4 +27,11 @@ func InitGRPCRuleService(cfg *config.Config) *mgrpc.GRPCRuleService {
 func InitMeiliService(cfg meili.ClientConfig) *meili.ClientService {
 	wire.Build(meili.NewClient, meili.NewMeiliService)
 	return nil
+}
+
+// 初始化Monitor服务
+
+func InitMonitorService(cfg *config.Config) (*web.SSERuleService, *mgrpc.GRPCRuleService) {
+	wire.Build(web.NewWebSSERuleService, mgrpc.NewGRPCRuleService, registryRuleService)
+	return nil, nil
 }

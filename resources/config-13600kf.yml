@@ -19,3 +19,7 @@ web:
   addr: ":10820"
 grpc:
   addr: ":10821"
+
+meili_search:
+  addr: http://192.168.70.128:7700
+  api_key: root123456

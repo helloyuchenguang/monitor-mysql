@@ -11,7 +11,7 @@ func main() {
 	// monitor-mysql
 	cfg := config.LoadConfig("./resources/config-13600kf.yml")
 	sseRule, grpcRule := registryRuleService(&cfg)
-	monitor.NewMonitorService(cfg, sseRule, grpcRule).StartCanal()
+	monitor.InitMonitorService(&cfg, sseRule, grpcRule).StartCanal()
 }
 
 func registryRuleService(config *config.Config) (*web.SSERuleService, *mgrpc.GRPCRuleService) {

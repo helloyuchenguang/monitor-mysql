@@ -64,9 +64,9 @@ func NewMonitorConfig(cfg *config.Config) *Config {
 	}
 }
 
-func NewMonitorService(cfg config.Config, sseRule *web.SSERuleService, grpcRule *mgrpc.GRPCRuleService) *CanalMonitorService {
+func InitMonitorService(cfg *config.Config, sseRule *web.SSERuleService, grpcRule *mgrpc.GRPCRuleService) *CanalMonitorService {
 	return &CanalMonitorService{
-		cfg:      NewMonitorConfig(&cfg),
+		cfg:      NewMonitorConfig(cfg),
 		SSERule:  sseRule,
 		grpcRule: grpcRule,
 	}
