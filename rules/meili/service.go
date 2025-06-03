@@ -5,12 +5,13 @@ import (
 	"main/common/config"
 )
 
-const RuleName = "meili"
+const RuleName = "MEILI"
 
 type ClientService struct {
 	Client *meilisearch.ServiceManager
 }
 
+// NewMeiliService 创建一个新的MeiliSearch客户端服务
 func NewMeiliService(cfg *config.Config) *ClientService {
 	if !cfg.ExistsRuleName(RuleName) {
 		return nil

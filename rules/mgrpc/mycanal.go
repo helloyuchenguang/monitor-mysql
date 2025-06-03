@@ -28,7 +28,7 @@ func (s *MyCanalServer) SubscribeRegexTable(req *mycanal2.SubscribeTableRequest,
 				slog.Info("通道关闭", slog.String("clientID", clientID))
 				return nil
 			}
-			if err := stream.Send(evt); err != nil {
+			if err := stream.Send(EventDataToGrpcReply(evt)); err != nil {
 				slog.Error("grpc推送消息失败", slog.String("clientID", clientID), slog.Any("error", err))
 				return err
 			}

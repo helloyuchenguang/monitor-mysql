@@ -26,13 +26,13 @@ message EventTableRowReply {
   // 事件类型
   CanalEventType eventType = 1;
   // 表结构
-  TableStructReply rowStruct = 2;
+  TableStructReply table = 2;
   // 插入信息
-  EventInsertInfoReply insertInfo = 3;
+  EventInsertInfoReply saveData = 3;
   // 删除信息
-  EventDeleteInfoReply deleteInfo = 4;
+  EventDeleteInfoReply deleteData = 4;
   // 修改信息
-  EventUpdateInfoReply updateInfo = 5;
+  EventUpdateInfoReply editData = 5;
 }
 
 // 表结构信息
@@ -61,11 +61,9 @@ message EventInsertInfoReply{
 // 更新信息
 message EventUpdateInfoReply{
   // key: 字段名, value: 字段值
-  map<string, string> beforeRowData = 1;
-  // key: 字段名, value: 字段值
-  map<string, string> afterRowData = 2;
+  map<string, string> unChangeRowData = 1;
   // 变更字段值
-  map<string, ColumnValueReply> editColumns = 3; // 字段信息
+  map<string, ColumnValueReply> editColumns = 2; // 字段信息
 }
 
 
@@ -90,4 +88,4 @@ service MyCanalService {
   rpc subscribeRegexTable(SubscribeTableRequest) returns (stream EventTableRowReply);
 }
 
-// protoc --go-grpc_out=. --go_out=. ./proto/mycanal.proto
+// protoc --go-grpc_out=./rules/mgrpc --go_out=./rules/mgrpc ./rules/mgrpc/proto/mycanal.proto

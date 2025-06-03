@@ -49,13 +49,7 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 			after := e.Rows[i+1]
 			for _, rule := range rules {
 				go func() {
-					err := rule.OnChange(&edit.SourceData{
-						TableSchema: tableSchema,
-						TableName:   tableName,
-						Cols:        cols,
-						Before:      before,
-						After:       after,
-					})
+					err := rule.OnChange(edit.ToEditEventData(tableSchema, tableName, cols, before, after))
 					if err != nil {
 						slog.Error(fmt.Sprintf("处理更新事件失败: %v", err))
 					}

@@ -46,7 +46,7 @@ func (w *SSERuleService) StartServer() {
 			select {
 			case msg := <-ch:
 				// 发送消息到客户端
-				_, err := fmt.Fprintf(writer, "data: %s\n\n", msg)
+				_, err := fmt.Fprintf(writer, "data: %s\n\n", msg.ToJson())
 				if err != nil {
 					return
 				}

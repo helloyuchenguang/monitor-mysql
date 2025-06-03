@@ -15,7 +15,7 @@ type Config struct {
 // SSERuleService rule服务的实体
 type SSERuleService struct {
 	cfg  *Config
-	Rule *edit.RuleServer[[]byte]
+	Rule *edit.RuleServer
 }
 
 // NewWebSSERuleService 创建一个新的SSE服务实例
@@ -26,7 +26,7 @@ func NewWebSSERuleService(cfg *config.Config) *SSERuleService {
 	}
 	sseRule := SSERuleService{
 		cfg:  &Config{Addr: cfg.Web.Addr},
-		Rule: edit.NewServer[[]byte](),
+		Rule: edit.NewServer(),
 	}
 	go sseRule.StartServer()
 	slog.Info("注册SSE规则服务", slog.String("addr", sseRule.cfg.Addr))

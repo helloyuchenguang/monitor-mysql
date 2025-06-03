@@ -228,6 +228,7 @@
     </div>
 </div>
 
+
 <script>
     (() => {
         const sseUrl = '/sse';
@@ -245,41 +246,7 @@
             return date.toLocaleTimeString('zh-CN', {hour12: false}) + '.' + String(date.getMilliseconds()).padStart(3, '0');
         }
 
-        // 生成变化字段摘要文本，格式：字段名: 旧值→新值
-        function buildChangeSummary(edits, oldData, newData) {
-            const parts = [];
-            for (const key in edits) {
-                if (edits.hasOwnProperty(key)) {
-                    const oldVal = oldData[key] ?? '';
-                    const newVal = newData[key] ?? '';
-                    parts.push(`${key}: ${oldVal} → ${newVal}`);
-                }
-            }
-            return parts.join('，');
-        }
-
-        // 辅助：判断字段类型（简单版）
-        function getType(value) {
-            if (value === null) return 'null';
-            if (value === undefined) return 'undefined';
-            if (Array.isArray(value)) return '数组';
-            switch (typeof value) {
-                case 'string':
-                    return '字符串';
-                case 'number':
-                    return '数字';
-                case 'boolean':
-                    return '布尔值';
-                case 'object':
-                    return '对象';
-                case 'function':
-                    return '函数';
-                default:
-                    return typeof value;
-            }
-        }
-
-        // 将复杂值转为字符串（比如对象或数组）
+        // 将复杂值转为字符串
         function stringifyValue(val) {
             if (val === null) return 'null';
             if (val === undefined) return '';
@@ -293,17 +260,33 @@
             return String(val);
         }
 
+        // 判断字段类型
+        function getType(value) {
+            if (value === null) return 'null';
+            if (value === undefined) return 'undefined';
+            if (Array.isArray(value)) return '数组';
+            switch (typeof value) {
+                case 'string':
+                    return '字符串';
+                case 'number':
+                    return '数字';
+                case 'boolean':
+                    return '布尔值';
+                case 'object':
+                    return '对象';
+                default:
+                    return typeof value;
+            }
+        }
+
         // 生成条目dom
         function createEntry(seq, time, id, edits, oldData, newData) {
             const entry = document.createElement('div');
             entry.className = 'entry';
             entry.tabIndex = 0;
             entry.setAttribute('role', 'button');
-            entry.setAttribute('aria-pressed', 'false');
             entry.dataset.id = id;
-            entry.setAttribute('aria-label', `第${seq}条变更记录，ID为${id}，时间${time}`);
 
-            // 头部信息
             const headerDiv = document.createElement('div');
             headerDiv.className = 'entry-header';
 
@@ -320,14 +303,11 @@
             headerDiv.appendChild(seqSpan);
             headerDiv.appendChild(idSpan);
             headerDiv.appendChild(timeSpan);
-
             entry.appendChild(headerDiv);
 
-            // 字段列表标题
             const titles = ['字段名', '字段类型', '旧值', '新值'];
             const fieldsList = document.createElement('div');
             fieldsList.className = 'fields-list';
-
             titles.forEach(title => {
                 const div = document.createElement('div');
                 div.className = 'header';
@@ -335,32 +315,27 @@
                 fieldsList.appendChild(div);
             });
 
-            // 字段数据
             const changedKeys = Object.keys(edits).sort();
             for (const key of changedKeys) {
-                const oldVal = oldData[key];
-                const newVal = newData[key];
+                const oldVal = edits[key].before;
+                const newVal = edits[key].after;
 
-                // 字段名
                 const nameDiv = document.createElement('div');
                 nameDiv.className = 'field-name changed-field';
                 nameDiv.textContent = key;
                 fieldsList.appendChild(nameDiv);
 
-                // 字段类型（使用新值类型优先）
                 const fieldType = getType(newVal !== undefined ? newVal : oldVal);
                 const typeDiv = document.createElement('div');
                 typeDiv.className = 'field-type changed-field';
                 typeDiv.textContent = fieldType;
                 fieldsList.appendChild(typeDiv);
 
-                // 旧值
                 const oldDiv = document.createElement('div');
                 oldDiv.className = 'field-old changed-field';
                 oldDiv.textContent = stringifyValue(oldVal);
                 fieldsList.appendChild(oldDiv);
 
-                // 新值
                 const newDiv = document.createElement('div');
                 newDiv.className = 'field-new changed-field';
                 newDiv.textContent = stringifyValue(newVal);
@@ -369,7 +344,6 @@
 
             entry.appendChild(fieldsList);
 
-            // 点击/键盘事件弹窗显示详情
             entry.addEventListener('click', () => openModal(id));
             entry.addEventListener('keydown', e => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -385,47 +359,37 @@
         function openModal(id) {
             const record = dataCache.get(id);
             if (!record) return;
+
             modalTitle.textContent = `详细对比 - ID: ${id}`;
-            modalTableBody.innerHTML = ''; // 清空
+            modalTableBody.innerHTML = '';
 
-            const {Old: oldData, New: newData, edits} = record;
-
-            // 合并字段保证全字段展示
+            const {oldData, newData, edits} = record;
             const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
             const keys = Array.from(allKeys).sort();
 
             for (const key of keys) {
                 const oldVal = oldData[key];
                 const newVal = newData[key];
-                const changed = edits && edits[key];
+                const changed = edits.hasOwnProperty(key);
 
                 const tr = document.createElement('tr');
-                if (changed) {
-                    tr.classList.add('changed-row');
-                }
+                if (changed) tr.classList.add('changed-row');
 
-                // 字段名
                 const tdKey = document.createElement('td');
                 tdKey.className = 'field-name';
                 tdKey.textContent = key;
                 tr.appendChild(tdKey);
 
-                // 字段类型，优先根据新值判断，没有则根据旧值
-                const fieldType = getType(newVal !== undefined ? newVal : oldVal);
                 const tdType = document.createElement('td');
                 tdType.className = 'type-cell';
-                tdType.textContent = fieldType;
+                tdType.textContent = getType(newVal !== undefined ? newVal : oldVal);
                 tr.appendChild(tdType);
 
-                // 旧值
                 const tdOld = document.createElement('td');
-                tdOld.className = 'value-old';
                 tdOld.textContent = oldVal === undefined ? '' : stringifyValue(oldVal);
                 tr.appendChild(tdOld);
 
-                // 新值
                 const tdNew = document.createElement('td');
-                tdNew.className = 'value-new';
                 tdNew.textContent = newVal === undefined ? '' : stringifyValue(newVal);
                 tr.appendChild(tdNew);
 
@@ -436,79 +400,49 @@
             modalClose.focus();
         }
 
-        // 弹窗关闭
         function closeModal() {
             modal.classList.remove('active');
         }
 
         modalClose.addEventListener('click', closeModal);
         modal.addEventListener('click', e => {
-            if (e.target === modal) {
-                closeModal();
-            }
+            if (e.target === modal) closeModal();
         });
-        // ESC关闭弹窗
         window.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && modal.classList.contains('active')) {
-                closeModal();
-            }
+            if (e.key === 'Escape') closeModal();
         });
 
-        // 处理接收到的新数据
-        function updateData(json) {
-            const oldData = json.DataUpdate?.Old;
-            const newData = json.DataUpdate?.New;
-            const edits = json.Edits || {};
-            if (!oldData || !newData) return;
+        // SSE 事件监听
+        const evtSource = new EventSource(sseUrl);
+        evtSource.onmessage = function (e) {
+            try {
+                const payload = JSON.parse(e.data);
+                if (!payload || payload.eventType !== 'UPDATE') return;
 
-            const id = newData.id;
-            if (!id) return;
+                const edit = payload.editData;
+                const oldData = edit.unChangeRowData || {};
+                const edits = edit.editFieldValues || {};
+                const newData = {...oldData};
 
-            // 过滤：只保留变化字段
-            const changedKeys = Object.keys(edits);
-            if (changedKeys.length === 0) return; // 无变化跳过
-
-            // 序号和时间
-            seq++;
-            const now = new Date();
-            const timeStr = formatTime(now);
-
-            // 创建新条目
-            const entry = createEntry(seq, timeStr, id, edits, oldData, newData);
-
-            // 新数据插入最前面
-            if (log.firstChild) {
-                log.insertBefore(entry, log.firstChild);
-            } else {
-                log.appendChild(entry);
-            }
-
-            // 缓存数据方便详情查看（保留最新一条）
-            dataCache.set(id, {Old: oldData, New: newData, edits});
-        }
-
-        let count = 0;
-
-        // 初始化 SSE
-        function initSSE() {
-            const evtSource = new EventSource(sseUrl);
-            evtSource.onmessage = e => {
-                try {
-                    console.log('接收到SSE数据时间:', ++count, new Date().toISOString());
-                    const json = JSON.parse(e.data);
-                    updateData(json);
-                } catch (err) {
-                    console.error('解析SSE数据失败', err);
+                for (const key in edits) {
+                    newData[key] = edits[key].after;
                 }
-            };
-            evtSource.onerror = err => {
-                console.error('SSE连接错误', err);
-            };
-        }
 
-        window.addEventListener('load', initSSE);
+                const id = oldData.id || `unknown-${Date.now()}`;
+                const now = new Date();
+                const time = formatTime(now);
+                seq += 1;
+
+                const entry = createEntry(seq, time, id, edits, oldData, newData);
+                log.prepend(entry);
+                dataCache.set(id, {oldData, newData, edits});
+            } catch (err) {
+                console.error('解析SSE数据失败:', err);
+            }
+        };
     })();
 </script>
+
 
 </body>
 </html>
