@@ -5,12 +5,7 @@ import (
 	cmap "github.com/orcaman/concurrent-map/v2"
 	"log/slog"
 	"main/common/event"
-	"main/rules/mgrpc/api/mycanal"
 )
-
-type ChannelReplyType interface {
-	[]byte | *mycanal.EventTableRowReply
-}
 
 type ChannelClient struct {
 	ID   string
