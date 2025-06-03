@@ -20,6 +20,10 @@ type SSERuleService struct {
 
 // NewWebSSERuleService 创建一个新的SSE服务实例
 func NewWebSSERuleService(cfg *config.Config) *SSERuleService {
+	if !cfg.ExistsRuleName(RuleName) {
+		slog.Info("配置中不存在SSERule，不创建SSE服务")
+		return nil
+	}
 	sseRule := SSERuleService{
 		cfg:  &Config{Addr: cfg.Web.Addr},
 		Rule: edit.NewServer[[]byte](),

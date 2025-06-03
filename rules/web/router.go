@@ -15,7 +15,7 @@ func (w *SSERuleService) StartServer() {
 
 	// 设置index.html为默认页面
 	router.GET("/", func(c *gin.Context) {
-		c.File("./web/static/index.html")
+		c.File("./rules/web/static/index.html")
 	})
 
 	// SSE路由

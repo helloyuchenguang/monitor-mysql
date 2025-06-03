@@ -6,9 +6,10 @@ package main
 import (
 	"github.com/google/wire"
 	"main/common/config"
-	"main/meili"
-	"main/mgrpc"
-	"main/web"
+	"main/monitor"
+	"main/rules/meili"
+	"main/rules/mgrpc"
+	"main/rules/web"
 )
 
 // 初始化SSE服务
@@ -24,14 +25,13 @@ func InitGRPCRuleService(cfg *config.Config) *mgrpc.GRPCRuleService {
 }
 
 // 初始化MeiliSearch服务
-func InitMeiliService(cfg meili.ClientConfig) *meili.ClientService {
-	wire.Build(meili.NewClient, meili.NewMeiliService)
+func InitMeiliService(cfg *config.Config) *meili.ClientService {
+	wire.Build(meili.NewMeiliService)
 	return nil
 }
 
 // 初始化Monitor服务
-
-func InitMonitorService(cfg *config.Config) (*web.SSERuleService, *mgrpc.GRPCRuleService) {
-	wire.Build(web.NewWebSSERuleService, mgrpc.NewGRPCRuleService, registryRuleService)
-	return nil, nil
+func InitMonitorService(cfg *config.Config) *monitor.CanalMonitorService {
+	wire.Build(web.NewWebSSERuleService, mgrpc.NewGRPCRuleService, meili.NewMeiliService, monitor.NewMonitorService)
+	return nil
 }

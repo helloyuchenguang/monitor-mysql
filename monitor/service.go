@@ -6,15 +6,17 @@ import (
 	"log/slog"
 	"main/common/config"
 	"main/common/event/edit"
-	"main/mgrpc"
-	"main/web"
+	"main/rules/meili"
+	"main/rules/mgrpc"
+	"main/rules/web"
 	"regexp"
 )
 
 type CanalMonitorService struct {
-	cfg      *Config
-	SSERule  *web.SSERuleService
-	grpcRule *mgrpc.GRPCRuleService
+	cfg          *Config
+	sseService   *web.SSERuleService
+	grpcService  *mgrpc.GRPCRuleService
+	meiliService *meili.ClientService
 }
 
 type WatchHandlers []struct {
@@ -64,11 +66,16 @@ func NewMonitorConfig(cfg *config.Config) *Config {
 	}
 }
 
-func InitMonitorService(cfg *config.Config, sseRule *web.SSERuleService, grpcRule *mgrpc.GRPCRuleService) *CanalMonitorService {
+// NewMonitorService 创建一个新的CanalMonitorService实例
+func NewMonitorService(cfg *config.Config,
+	sseService *web.SSERuleService,
+	grpcService *mgrpc.GRPCRuleService,
+	meiliService *meili.ClientService) *CanalMonitorService {
 	return &CanalMonitorService{
-		cfg:      NewMonitorConfig(cfg),
-		SSERule:  sseRule,
-		grpcRule: grpcRule,
+		cfg:          NewMonitorConfig(cfg),
+		sseService:   sseService,
+		grpcService:  grpcService,
+		meiliService: meiliService,
 	}
 }
 
@@ -86,16 +93,27 @@ func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 		// 如果没有规则,使用默认规则
 		if len(wt.Rules) == 0 {
 			slog.Error(fmt.Sprintf("表 %s 没有监控规则,使用默认监控规则", wt.TableRegex))
-			rules[i] = []edit.MonitorRuler{m.SSERule.Rule}
+			rules[i] = []edit.MonitorRuler{m.sseService.Rule}
 			continue
 		} else {
 			tableRules := make([]edit.MonitorRuler, len(wt.Rules))
 			for j, ruleName := range wt.Rules {
 				switch ruleName {
 				case web.RuleName:
-					tableRules[j] = m.SSERule.Rule
+					if m.sseService == nil {
+						panic("SSE规则服务未初始化")
+					}
+					tableRules[j] = m.sseService.Rule
 				case mgrpc.RuleName:
-					tableRules[j] = m.grpcRule.Rule
+					if m.grpcService == nil {
+						panic("gRPC规则服务未初始化")
+					}
+					tableRules[j] = m.grpcService.Rule
+				case meili.RuleName:
+					if m.meiliService == nil {
+						panic("MeiliSearch规则服务未初始化")
+					}
+					//tableRules[j] = m.meiliService.Rule
 				default:
 					panic("规则 " + ruleName + " 不存在,请检查配置")
 				}

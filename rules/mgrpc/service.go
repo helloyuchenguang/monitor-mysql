@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"main/common/config"
 	"main/common/event/edit"
-	"main/mgrpc/api/mycanal"
+	"main/rules/mgrpc/api/mycanal"
 )
 
 const RuleName = "GRPCRule"
@@ -21,6 +21,10 @@ type GRPCRuleService struct {
 
 // NewGRPCRuleService 创建一个新的GRPCRuleServer实例
 func NewGRPCRuleService(cfg *config.Config) *GRPCRuleService {
+	if !cfg.ExistsRuleName(RuleName) {
+		slog.Info("配置中不存在GRPCRule，不创建GRPC服务")
+		return nil
+	}
 	service := &GRPCRuleService{
 		cfg:  &Config{Addr: cfg.GRPC.Addr},
 		Rule: edit.NewServer[*mycanal.EventTableRowReply](),
