@@ -5,6 +5,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/canal"
 	"log/slog"
 	"main/common/event/edit"
+	"main/common/event/save"
 	"regexp"
 )
 
@@ -56,6 +57,18 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 				}()
 			}
 		}
+	case canal.InsertAction:
+		for _, row := range e.Rows {
+			for _, rule := range rules {
+				go func() {
+					err := rule.OnInsert(save.ToSaveEventData(tableSchema, tableName, cols, row))
+					if err != nil {
+						slog.Error(fmt.Sprintf("处理插入事件失败: %v", err))
+					}
+				}()
+			}
+		}
 	}
+
 	return nil
 }

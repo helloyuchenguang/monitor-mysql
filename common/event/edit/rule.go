@@ -57,6 +57,12 @@ func (rs *RuleServer) OnChange(data *event.Data) error {
 	return nil
 }
 
+func (rs *RuleServer) OnInsert(data *event.Data) error {
+	// 发布更新信息到所有客户端
+	rs.Broadcast(data)
+	return nil
+}
+
 // Broadcast 广播消息给所有客户端
 func (rs *RuleServer) Broadcast(data *event.Data) {
 	for _, client := range rs.clients.Items() {
