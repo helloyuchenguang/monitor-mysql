@@ -5,7 +5,7 @@ import (
 	"main/common/config"
 )
 
-const RuleName = "MEILI"
+const RuleName = "MeiliSearchRule"
 
 type ClientService struct {
 	Client *meilisearch.ServiceManager

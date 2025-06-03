@@ -12,8 +12,9 @@ database:
 watch_handlers:
   - table: "bigdata\\.user_info"
     rules:
-#      - GRPCRule
+      - GRPCRule
       - SSERule
+      - MeiliSearchRule
 
 web:
   addr: ":10820"
