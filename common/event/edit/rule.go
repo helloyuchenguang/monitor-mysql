@@ -51,13 +51,7 @@ func (rs *RuleServer) RemoveClientByID(clientID string) {
 	}
 }
 
-func (rs *RuleServer) OnChange(data *event.Data) error {
-	// 发布更新信息到所有客户端
-	rs.Broadcast(data)
-	return nil
-}
-
-func (rs *RuleServer) OnInsert(data *event.Data) error {
+func (rs *RuleServer) OnNext(data *event.Data) error {
 	// 发布更新信息到所有客户端
 	rs.Broadcast(data)
 	return nil

@@ -50,7 +50,7 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 			after := e.Rows[i+1]
 			for _, rule := range rules {
 				go func() {
-					err := rule.OnChange(edit.ToEditEventData(tableSchema, tableName, cols, before, after))
+					err := rule.OnNext(edit.ToEditEventData(tableSchema, tableName, cols, before, after))
 					if err != nil {
 						slog.Error(fmt.Sprintf("处理更新事件失败: %v", err))
 					}
@@ -61,7 +61,7 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 		for _, row := range e.Rows {
 			for _, rule := range rules {
 				go func() {
-					err := rule.OnInsert(save.ToSaveEventData(tableSchema, tableName, cols, row))
+					err := rule.OnNext(save.ToSaveEventData(tableSchema, tableName, cols, row))
 					if err != nil {
 						slog.Error(fmt.Sprintf("处理插入事件失败: %v", err))
 					}

@@ -4,9 +4,6 @@ import "main/common/event"
 
 // MonitorRuler 监控处理器接口
 type MonitorRuler interface {
-	// OnChange 处理更新信息
-	OnChange(d *event.Data) error
-
-	// OnInsert 处理插入信息
-	OnInsert(d *event.Data) error
+	// OnNext 处理更新信息
+	OnNext(d *event.Data) error
 }
