@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/go-mysql-org/go-mysql/canal"
 	"log/slog"
+	"main/common/event"
+	"main/common/event/del"
 	"main/common/event/edit"
 	"main/common/event/save"
 	"regexp"
@@ -36,39 +38,35 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 		return nil
 	}
 
-	action := e.Action
 	cols := e.Table.Columns
 	if len(cols) == 0 {
 		slog.Error(fmt.Sprintf("表 %s.%s 没有列信息", tableSchema, tableName))
 		return nil
 	}
-
-	switch action {
-	case canal.UpdateAction:
-		for i := 0; i < len(e.Rows); i += 2 {
-			before := e.Rows[i]
-			after := e.Rows[i+1]
-			for _, rule := range rules {
-				go func() {
-					err := rule.OnNext(edit.ToEditEventData(tableSchema, tableName, cols, before, after))
-					if err != nil {
-						slog.Error(fmt.Sprintf("处理更新事件失败: %v", err))
-					}
-				}()
+	// 根据事件类型生成对应的事件数据
+	data := GenerateEventData(e)
+	for _, rule := range rules {
+		go func() {
+			err := rule.OnNext(data)
+			if err != nil {
+				slog.Error(fmt.Sprintf("处理删除事件失败: %v", err))
 			}
-		}
-	case canal.InsertAction:
-		for _, row := range e.Rows {
-			for _, rule := range rules {
-				go func() {
-					err := rule.OnNext(save.ToSaveEventData(tableSchema, tableName, cols, row))
-					if err != nil {
-						slog.Error(fmt.Sprintf("处理插入事件失败: %v", err))
-					}
-				}()
-			}
-		}
+		}()
 	}
 
 	return nil
+}
+
+func GenerateEventData(e *canal.RowsEvent) *event.Data {
+	switch e.Action {
+	case canal.InsertAction:
+		return save.ToSaveEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows[0])
+	case canal.UpdateAction:
+		return edit.ToEditEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows[0], e.Rows[1])
+	case canal.DeleteAction:
+		return del.ToDeleteEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows[0])
+	default:
+		slog.Warn(fmt.Sprintf("未知的事件类型: %s", e.Action))
+		return nil
+	}
 }

@@ -61,10 +61,11 @@ type Column struct {
 }
 
 type Data struct {
-	EventType EventType `json:"eventType"` // 事件类型
-	Table     *Table    `json:"table"`     // 事件对应的表信息
-	SaveData  *SaveData `json:"saveData"`  // 插入事件数据
-	EditData  *EditData `json:"editData"`  // 编辑事件数据
+	EventType  EventType   `json:"eventType"`  // 事件类型
+	Table      *Table      `json:"table"`      // 事件对应的表信息
+	SaveData   *SaveData   `json:"saveData"`   // 插入事件数据
+	EditData   *EditData   `json:"editData"`   // 编辑事件数据
+	DeleteData *DeleteData `json:"deleteData"` // 删除事件数据
 }
 
 func (data *Data) ToJson() string {
@@ -100,5 +101,10 @@ func (ef *EditFieldValue) ConvertToPairStr() (string, string) {
 
 // SaveData 插入事件数据
 type SaveData struct {
+	RowData RowData `json:"rowData"` // 插入的行数据
+}
+
+// DeleteData 删除事件数据
+type DeleteData struct {
 	RowData RowData `json:"rowData"` // 插入的行数据
 }

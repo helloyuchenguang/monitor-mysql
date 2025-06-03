@@ -1,15 +1,15 @@
-package save
+package del
 
 import (
 	"github.com/go-mysql-org/go-mysql/schema"
 	"main/common/event"
 )
 
-func ToSaveEventData(schema, tableName string, cols []schema.TableColumn, row []any) *event.Data {
+func ToDeleteEventData(schema, tableName string, cols []schema.TableColumn, row []any) *event.Data {
 	// 列信息
 	var columns []*event.Column
 	// 记录行数据
-	saveData := event.NewRowDataWithSize(len(cols))
+	deleteData := event.NewRowDataWithSize(len(cols))
 	for idx, col := range cols {
 		colName := col.Name
 		colVal := row[idx]
@@ -28,15 +28,14 @@ func ToSaveEventData(schema, tableName string, cols []schema.TableColumn, row []
 			RowType: col.RawType,
 		}
 		columns = append(columns, &column)
-		saveData[colName] = colVal
+		deleteData[colName] = colVal
 	}
 
 	return &event.Data{
-		EventType: event.Insert,
+		EventType: event.Delete,
 		Table:     event.NewTable(schema, tableName, columns),
-		SaveData: &event.SaveData{
-			RowData: saveData,
+		DeleteData: &event.DeleteData{
+			RowData: deleteData,
 		},
 	}
-
 }
