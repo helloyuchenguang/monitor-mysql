@@ -2,7 +2,6 @@ package edit
 
 import (
 	"github.com/google/uuid"
-	cmap "github.com/orcaman/concurrent-map/v2"
 	"log/slog"
 	"main/common/event"
 )
@@ -13,13 +12,13 @@ type ChannelClient struct {
 }
 
 type RuleServer struct {
-	clients cmap.ConcurrentMap[string, *ChannelClient]
+	clients map[string]*ChannelClient
 }
 
 // NewServer  监控处理器接口
 func NewServer() *RuleServer {
 	return &RuleServer{
-		clients: cmap.New[*ChannelClient](),
+		clients: make(map[string]*ChannelClient),
 	}
 }
 
@@ -31,15 +30,16 @@ func (rs *RuleServer) PutNewClient() *ChannelClient {
 		// 带缓冲防止阻塞
 		Chan: make(chan *event.Data, 100_000),
 	}
-	rs.clients.Set(cc.ID, cc)
+	rs.clients[cc.ID] = cc
 	slog.Info("添加新客户端", slog.String("clientID", cc.ID))
 	return cc
 }
 
 func (rs *RuleServer) RemoveClientByID(clientID string) {
-	if client, ok := rs.clients.Get(clientID); ok {
+	if client, ok := rs.clients[clientID]; ok {
 		close(client.Chan) // 关闭通道
-		rs.clients.Remove(clientID)
+		// 从客户端列表中删除
+		delete(rs.clients, clientID)
 		slog.Info("删除客户端", slog.String("clientID", clientID))
 	} else {
 		slog.Warn("尝试删除不存在的客户端", slog.String("clientID", clientID))
@@ -52,9 +52,14 @@ func (rs *RuleServer) OnNext(data *event.Data) error {
 	return nil
 }
 
+func (rs *RuleServer) ClientIsEmpty() bool {
+	// 检查是否有客户端连接
+	return len(rs.clients) == 0
+}
+
 // Broadcast 广播消息给所有客户端
 func (rs *RuleServer) Broadcast(data *event.Data) {
-	for _, client := range rs.clients.Items() {
+	for _, client := range rs.clients {
 		go func() {
 			select {
 			case client.Chan <- data:

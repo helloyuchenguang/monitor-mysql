@@ -113,7 +113,7 @@ func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 					if m.meiliService == nil {
 						panic("MeiliSearch规则服务未初始化")
 					}
-					//tableRules[j] = m.meiliService.Rule
+					tableRules[j] = m.meiliService.Rule
 				default:
 					panic("规则 " + ruleName + " 不存在,请检查配置")
 				}

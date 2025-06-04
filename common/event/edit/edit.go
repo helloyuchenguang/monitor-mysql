@@ -6,4 +6,6 @@ import "main/common/event"
 type MonitorRuler interface {
 	// OnNext 处理更新信息
 	OnNext(d *event.Data) error
+
+	ClientIsEmpty() bool
 }

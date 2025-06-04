@@ -46,6 +46,10 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 	// 根据事件类型生成对应的事件数据
 	data := GenerateEventData(e)
 	for _, rule := range rules {
+		// 如果规则没有客户端连接，则跳过
+		if rule.ClientIsEmpty() {
+			continue
+		}
 		go func() {
 			err := rule.OnNext(data)
 			if err != nil {
@@ -53,7 +57,6 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 			}
 		}()
 	}
-
 	return nil
 }
 
