@@ -9,6 +9,7 @@ import (
 	"main/rules/meili"
 	"main/rules/mgrpc"
 	"main/rules/web"
+	"math"
 	"regexp"
 )
 
@@ -83,49 +84,49 @@ func NewMonitorService(cfg *config.Config,
 // newMyEventHandler 创建自定义事件处理器
 func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 	// 把schema和table正则合成一个正则表达式列表给IncludeTableRegex
-	var compiledRegexps []*regexp.Regexp
+	watchRegexps := make([]*WatchRegexp, len(m.cfg.WatchHandlers))
 	// 表格正则对应的监控规则
-	rules := make(map[int][]rule.MonitorRuler, len(m.cfg.WatchHandlers))
 	for i, wt := range m.cfg.WatchHandlers {
-		r, err := regexp.Compile(wt.TableRegex)
+		rules := make([]rule.MonitorRuler, int(math.Max(float64(len(wt.Rules)), 1)))
+		re, err := regexp.Compile(wt.TableRegex)
 		if err != nil {
 			panic("编译正则失败: " + err.Error())
 		}
-		compiledRegexps = append(compiledRegexps, r)
 		// 如果没有规则,使用默认规则
 		if len(wt.Rules) == 0 {
 			slog.Error(fmt.Sprintf("表 %s 没有监控规则,使用默认监控规则", wt.TableRegex))
-			rules[i] = []rule.MonitorRuler{m.sseService.Rule}
+			rules[i] = m.sseService.Rule
 			continue
 		} else {
-			tableRules := make([]rule.MonitorRuler, len(wt.Rules))
 			for j, ruleName := range wt.Rules {
 				switch ruleName {
 				case web.RuleName:
 					if m.sseService == nil {
 						panic("SSE规则服务未初始化")
 					}
-					tableRules[j] = m.sseService.Rule
+					rules[j] = m.sseService.Rule
 				case mgrpc.RuleName:
 					if m.grpcService == nil {
 						panic("gRPC规则服务未初始化")
 					}
-					tableRules[j] = m.grpcService.Rule
+					rules[j] = m.grpcService.Rule
 				case meili.RuleName:
 					if m.meiliService == nil {
 						panic("MeiliSearch规则服务未初始化")
 					}
-					tableRules[j] = m.meiliService.Rule
+					rules[j] = m.meiliService.Rule
 				default:
 					panic("规则 " + ruleName + " 不存在,请检查配置")
 				}
 			}
-			rules[i] = tableRules
+		}
+		watchRegexps[i] = &WatchRegexp{
+			Regexp: re,
+			Rules:  rules,
 		}
 	}
 	return &CustomEventHandler{
-		WatchRegexps: compiledRegexps,
-		Rules:        rules,
+		WatchRegexps: watchRegexps,
 	}
 }
 
@@ -160,7 +161,7 @@ func (m *CanalMonitorService) StartCanal() {
 		slog.Error(fmt.Sprintf("获取masterPos失败: %v", err))
 		return
 	}
-
+	slog.Info("启动canal....")
 	if err := c.RunFrom(pos); err != nil {
 		slog.Error(fmt.Sprintf("canal运行失败: %v", err))
 	}

@@ -47,6 +47,10 @@ type Table struct {
 	Columns []*Column `json:"columns"` // 列信息
 }
 
+func (t *Table) ObtainTableName() string {
+	return fmt.Sprintf("%s_%s", t.Schema, t.Table)
+}
+
 func NewTable(schema string, table string, columns []*Column) *Table {
 	return &Table{
 		Schema:  schema,

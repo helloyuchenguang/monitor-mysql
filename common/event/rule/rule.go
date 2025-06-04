@@ -19,19 +19,19 @@ type ChannelClient struct {
 	Chan chan *event.Data
 }
 
-type RuleServer struct {
+type Server struct {
 	clients map[string]*ChannelClient
 }
 
 // NewServer  监控处理器接口
-func NewServer() *RuleServer {
-	return &RuleServer{
+func NewServer() *Server {
+	return &Server{
 		clients: make(map[string]*ChannelClient),
 	}
 }
 
 // PutNewClient 创建一个新的SSE客户端
-func (rs *RuleServer) PutNewClient() *ChannelClient {
+func (rs *Server) PutNewClient() *ChannelClient {
 	cc := &ChannelClient{
 		// 使用 github.com/google/uuid
 		ID: uuid.New().String(),
@@ -43,7 +43,7 @@ func (rs *RuleServer) PutNewClient() *ChannelClient {
 	return cc
 }
 
-func (rs *RuleServer) RemoveClientByID(clientID string) {
+func (rs *Server) RemoveClientByID(clientID string) {
 	if client, ok := rs.clients[clientID]; ok {
 		close(client.Chan) // 关闭通道
 		// 从客户端列表中删除
@@ -54,7 +54,7 @@ func (rs *RuleServer) RemoveClientByID(clientID string) {
 	}
 }
 
-func (rs *RuleServer) OnNext(data *event.Data) error {
+func (rs *Server) OnNext(data *event.Data) error {
 	if len(rs.clients) == 1 {
 		// 如果只有一个客户端，直接发送数据
 		for _, client := range rs.clients {
@@ -81,7 +81,7 @@ func forward(client *ChannelClient, data *event.Data) {
 	}
 }
 
-func (rs *RuleServer) ClientIsEmpty() bool {
+func (rs *Server) ClientIsEmpty() bool {
 	// 检查是否有客户端连接
 	return len(rs.clients) == 0
 }

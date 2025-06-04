@@ -15,7 +15,7 @@ type Config struct {
 // SSERuleService rule服务的实体
 type SSERuleService struct {
 	cfg  *Config
-	Rule *rule.RuleServer
+	Rule *rule.Server
 }
 
 // NewWebSSERuleService 创建一个新的SSE服务实例

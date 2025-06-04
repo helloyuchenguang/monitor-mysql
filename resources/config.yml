@@ -10,7 +10,7 @@ database:
     - "^qucdin_local\\.*"
 
 watch_handlers:
-  - table: "qucdin_lcoal\\.business_data_tpl_node_*"
+  - table: "qucdin_lcoal\\.*"
     rules:
       - GRPCRule
       - SSERule

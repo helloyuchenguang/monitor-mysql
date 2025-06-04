@@ -15,7 +15,7 @@ type Config struct {
 // GRPCRuleService 构建时需要注入的类型
 type GRPCRuleService struct {
 	cfg  *Config
-	Rule *rule.RuleServer
+	Rule *rule.Server
 }
 
 // NewGRPCRuleService 创建一个新的GRPCRuleServer实例

@@ -12,18 +12,22 @@ import (
 	"regexp"
 )
 
+type WatchRegexp struct {
+	Regexp *regexp.Regexp
+	Rules  []rule.MonitorRuler
+}
+
 type CustomEventHandler struct {
 	canal.DummyEventHandler
-	WatchRegexps []*regexp.Regexp
-	Rules        map[int][]rule.MonitorRuler
+	WatchRegexps []*WatchRegexp
 }
 
 // isWatched 判断表是否被监控
 func (h *CustomEventHandler) isWatched(schema, table string) ([]rule.MonitorRuler, bool) {
 	fullName := fmt.Sprintf("%s.%s", schema, table)
-	for i, r := range h.WatchRegexps {
-		if r.MatchString(fullName) {
-			return h.Rules[i], true
+	for _, r := range h.WatchRegexps {
+		if r.Regexp.MatchString(fullName) {
+			return r.Rules, true
 		}
 	}
 	return nil, false
@@ -46,13 +50,13 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 	}
 	// 根据事件类型生成对应的事件数据
 	data := GenerateEventData(e)
-	for _, rule := range rules {
+	for _, r := range rules {
 		// 如果规则没有客户端连接，则跳过
-		if rule.ClientIsEmpty() {
+		if r.ClientIsEmpty() {
 			continue
 		}
 		go func() {
-			err := rule.OnNext(data)
+			err := r.OnNext(data)
 			if err != nil {
 				slog.Error(fmt.Sprintf("处理删除事件失败: %v", err))
 			}
