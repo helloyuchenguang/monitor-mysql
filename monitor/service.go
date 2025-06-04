@@ -5,7 +5,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/canal"
 	"log/slog"
 	"main/common/config"
-	"main/common/event/edit"
+	"main/common/event/rule"
 	"main/rules/meili"
 	"main/rules/mgrpc"
 	"main/rules/web"
@@ -85,7 +85,7 @@ func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 	// 把schema和table正则合成一个正则表达式列表给IncludeTableRegex
 	var compiledRegexps []*regexp.Regexp
 	// 表格正则对应的监控规则
-	rules := make(map[int][]edit.MonitorRuler, len(m.cfg.WatchHandlers))
+	rules := make(map[int][]rule.MonitorRuler, len(m.cfg.WatchHandlers))
 	for i, wt := range m.cfg.WatchHandlers {
 		r, err := regexp.Compile(wt.TableRegex)
 		if err != nil {
@@ -95,10 +95,10 @@ func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 		// 如果没有规则,使用默认规则
 		if len(wt.Rules) == 0 {
 			slog.Error(fmt.Sprintf("表 %s 没有监控规则,使用默认监控规则", wt.TableRegex))
-			rules[i] = []edit.MonitorRuler{m.sseService.Rule}
+			rules[i] = []rule.MonitorRuler{m.sseService.Rule}
 			continue
 		} else {
-			tableRules := make([]edit.MonitorRuler, len(wt.Rules))
+			tableRules := make([]rule.MonitorRuler, len(wt.Rules))
 			for j, ruleName := range wt.Rules {
 				switch ruleName {
 				case web.RuleName:

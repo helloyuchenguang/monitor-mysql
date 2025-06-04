@@ -1,10 +1,18 @@
-package edit
+package rule
 
 import (
 	"github.com/google/uuid"
 	"log/slog"
 	"main/common/event"
 )
+
+// MonitorRuler 监控处理器接口
+type MonitorRuler interface {
+	// OnNext 处理更新信息
+	OnNext(d *event.Data) error
+
+	ClientIsEmpty() bool
+}
 
 type ChannelClient struct {
 	ID   string

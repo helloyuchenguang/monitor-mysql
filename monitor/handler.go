@@ -7,6 +7,7 @@ import (
 	"main/common/event"
 	"main/common/event/del"
 	"main/common/event/edit"
+	"main/common/event/rule"
 	"main/common/event/save"
 	"regexp"
 )
@@ -14,11 +15,11 @@ import (
 type CustomEventHandler struct {
 	canal.DummyEventHandler
 	WatchRegexps []*regexp.Regexp
-	Rules        map[int][]edit.MonitorRuler
+	Rules        map[int][]rule.MonitorRuler
 }
 
 // isWatched 判断表是否被监控
-func (h *CustomEventHandler) isWatched(schema, table string) ([]edit.MonitorRuler, bool) {
+func (h *CustomEventHandler) isWatched(schema, table string) ([]rule.MonitorRuler, bool) {
 	fullName := fmt.Sprintf("%s.%s", schema, table)
 	for i, r := range h.WatchRegexps {
 		if r.MatchString(fullName) {

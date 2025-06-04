@@ -3,7 +3,7 @@ package mgrpc
 import (
 	"log/slog"
 	"main/common/config"
-	"main/common/event/edit"
+	"main/common/event/rule"
 )
 
 const RuleName = "GRPCRule"
@@ -15,7 +15,7 @@ type Config struct {
 // GRPCRuleService 构建时需要注入的类型
 type GRPCRuleService struct {
 	cfg  *Config
-	Rule *edit.RuleServer
+	Rule *rule.RuleServer
 }
 
 // NewGRPCRuleService 创建一个新的GRPCRuleServer实例
@@ -26,7 +26,7 @@ func NewGRPCRuleService(cfg *config.Config) *GRPCRuleService {
 	}
 	service := &GRPCRuleService{
 		cfg:  &Config{Addr: cfg.GRPC.Addr},
-		Rule: edit.NewServer(),
+		Rule: rule.NewServer(),
 	}
 	go service.RunGrpcCanal()
 	slog.Info("grpc规则服务已启动", slog.String("addr", service.cfg.Addr))
