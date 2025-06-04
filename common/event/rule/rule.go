@@ -55,26 +55,33 @@ func (rs *RuleServer) RemoveClientByID(clientID string) {
 }
 
 func (rs *RuleServer) OnNext(data *event.Data) error {
-	// 发布更新信息到所有客户端
-	rs.Broadcast(data)
+	if len(rs.clients) == 1 {
+		// 如果只有一个客户端，直接发送数据
+		for _, client := range rs.clients {
+			forward(client, data)
+			return nil
+		}
+	} else {
+		for _, client := range rs.clients {
+			go func(c *ChannelClient) {
+				forward(c, data)
+			}(client)
+		}
+	}
 	return nil
+}
+
+// forward 将数据发送到客户端的通道
+func forward(client *ChannelClient, data *event.Data) {
+	select {
+	case client.Chan <- data:
+	default:
+		// 防止阻塞：可选择丢弃消息或断开慢客户端
+		slog.Warn("丢弃消息", slog.String("clientID", client.ID))
+	}
 }
 
 func (rs *RuleServer) ClientIsEmpty() bool {
 	// 检查是否有客户端连接
 	return len(rs.clients) == 0
-}
-
-// Broadcast 广播消息给所有客户端
-func (rs *RuleServer) Broadcast(data *event.Data) {
-	for _, client := range rs.clients {
-		go func() {
-			select {
-			case client.Chan <- data:
-			default:
-				// 防止阻塞：可选择丢弃消息或断开慢客户端
-				slog.Warn("丢弃消息", slog.String("clientID", client.ID))
-			}
-		}()
-	}
 }

@@ -8,12 +8,6 @@ import (
 
 const RuleName = "MeiliSearchRule"
 
-type ClientService struct {
-	Client        *meilisearch.ServiceManager
-	Rule          *rule.RuleServer
-	ChannelClient *rule.ChannelClient
-}
-
 // NewMeiliService 创建一个新的MeiliSearch客户端服务
 func NewMeiliService(cfg *config.Config) *ClientService {
 	if !cfg.ExistsRuleName(RuleName) {
