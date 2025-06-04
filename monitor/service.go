@@ -39,6 +39,7 @@ type Config struct {
 	WatchHandlers WatchHandlers
 }
 
+// NewMonitorConfig 根据配置文件创建监控配置
 func NewMonitorConfig(cfg *config.Config) *Config {
 	cfgWatchHandlers := cfg.WatchHandlers
 	// 创建配置
@@ -79,6 +80,7 @@ func NewMonitorService(cfg *config.Config,
 	}
 }
 
+// newMyEventHandler 创建自定义事件处理器
 func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 	// 把schema和table正则合成一个正则表达式列表给IncludeTableRegex
 	var compiledRegexps []*regexp.Regexp
