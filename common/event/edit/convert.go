@@ -6,8 +6,8 @@ import (
 	"reflect"
 )
 
-// ToEditEventData 从行数据中获取更新信息
-func ToEditEventData(tableSchema, tableName string, cols []schema.TableColumn, rows [][]any) *event.Data {
+// ToEditDataList 从行数据中获取更新信息
+func ToEditDataList(cols []schema.TableColumn, rows [][]any) []*event.EditData {
 	var editDataList []*event.EditData
 	for i := 0; i < len(rows); i += 2 {
 		before := rows[i]  // 旧数据
@@ -31,7 +31,6 @@ func ToEditEventData(tableSchema, tableName string, cols []schema.TableColumn, r
 					newVal = string(newVal.([]uint8))
 				}
 			}
-
 			// 如果旧值和新值不相等，则记录更新信息
 			if oldVal != newVal {
 				editData.EditFieldValues[colName] = &event.EditFieldValue{
@@ -47,10 +46,6 @@ func ToEditEventData(tableSchema, tableName string, cols []schema.TableColumn, r
 		}
 		editDataList = append(editDataList, editData)
 	}
-	return &event.Data{
-		EventType: event.Update,
-		Table:     event.NewTable(tableSchema, tableName, cols),
-		EditData:  editDataList,
-	}
+	return editDataList
 
 }

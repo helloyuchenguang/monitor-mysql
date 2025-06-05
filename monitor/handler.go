@@ -3,12 +3,12 @@ package monitor
 import (
 	"fmt"
 	"github.com/go-mysql-org/go-mysql/canal"
+	"github.com/samber/lo"
 	"log/slog"
 	"main/common/event"
-	"main/common/event/del"
 	"main/common/event/edit"
+	"main/common/event/row"
 	"main/common/event/rule"
-	"main/common/event/save"
 	"regexp"
 )
 
@@ -63,14 +63,31 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 	return nil
 }
 
+// GenerateEventDataList 根据 canal.RowsEvent 生成对应的 event.Data
 func GenerateEventDataList(e *canal.RowsEvent) *event.Data {
 	switch e.Action {
 	case canal.InsertAction:
-		return save.ToSaveEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows)
+		return &event.Data{
+			EventType: event.Insert,
+			Table:     event.NewTable(e.Table.Schema, e.Table.Name, e.Table.Columns),
+			SaveData: lo.Map(row.ToRowDataList(e.Table.Columns, e.Rows), func(item event.RowData, _ int) *event.SaveData {
+				return &event.SaveData{RowData: item}
+			}),
+		}
 	case canal.DeleteAction:
-		return del.ToDeleteEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows)
+		return &event.Data{
+			EventType: event.Delete,
+			Table:     event.NewTable(e.Table.Schema, e.Table.Name, e.Table.Columns),
+			DeleteData: lo.Map(row.ToRowDataList(e.Table.Columns, e.Rows), func(item event.RowData, _ int) *event.DeleteData {
+				return &event.DeleteData{RowData: item}
+			}),
+		}
 	case canal.UpdateAction:
-		return edit.ToEditEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows)
+		return &event.Data{
+			EventType: event.Update,
+			Table:     event.NewTable(e.Table.Schema, e.Table.Name, e.Table.Columns),
+			EditData:  edit.ToEditDataList(e.Table.Columns, e.Rows),
+		}
 	default:
 		slog.Warn(fmt.Sprintf("未知的事件类型: %s", e.Action))
 		return nil
