@@ -36,7 +36,7 @@ func (rs *Server) PutNewClient() *ChannelClient {
 		// 使用 github.com/google/uuid
 		ID: uuid.New().String(),
 		// 带缓冲防止阻塞
-		Chan: make(chan *event.Data, 100_000),
+		Chan: make(chan *event.Data, 1_000),
 	}
 	rs.clients[cc.ID] = cc
 	slog.Info("添加新客户端", slog.String("clientID", cc.ID))

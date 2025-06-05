@@ -49,14 +49,15 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 		return nil
 	}
 	// 根据事件类型生成对应的事件数据
-	data := GenerateEventData(e)
+	dataList := GenerateEventDataList(e)
+	slog.Info(fmt.Sprintf("<UNK> %s.%s <UNK>", tableSchema, tableName))
 	for _, r := range rules {
 		// 如果规则没有客户端连接，则跳过
 		if r.ClientIsEmpty() {
 			continue
 		}
 		go func() {
-			err := r.OnNext(data)
+			err := r.OnNext(dataList)
 			if err != nil {
 				slog.Error(fmt.Sprintf("处理删除事件失败: %v", err))
 			}
@@ -65,14 +66,14 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 	return nil
 }
 
-func GenerateEventData(e *canal.RowsEvent) *event.Data {
+func GenerateEventDataList(e *canal.RowsEvent) *event.Data {
 	switch e.Action {
 	case canal.InsertAction:
-		return save.ToSaveEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows[0])
-	case canal.UpdateAction:
-		return edit.ToEditEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows[0], e.Rows[1])
+		return save.ToSaveEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows)
 	case canal.DeleteAction:
-		return del.ToDeleteEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows[0])
+		return del.ToDeleteEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows)
+	case canal.UpdateAction:
+		return edit.ToEditEventData(e.Table.Schema, e.Table.Name, e.Table.Columns, e.Rows)
 	default:
 		slog.Warn(fmt.Sprintf("未知的事件类型: %s", e.Action))
 		return nil

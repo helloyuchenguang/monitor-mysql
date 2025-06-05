@@ -2,10 +2,10 @@ package meili
 
 import (
 	"github.com/meilisearch/meilisearch-go"
-	cmap "github.com/orcaman/concurrent-map/v2"
 	"log/slog"
 	"main/common/config"
 	"main/common/event/rule"
+	"sync"
 )
 
 const RuleName = "MeiliSearchRule"
@@ -20,7 +20,7 @@ func NewMeiliService(cfg *config.Config) *ClientService {
 	service := &ClientService{Client: client,
 		Rule:          ruleServer,
 		ChannelClient: ruleServer.PutNewClient(),
-		IndexMap:      cmap.New[bool](),
+		IndexMap:      sync.Map{},
 	}
 	go service.asyncDataChange()
 	slog.Info("MeiliSearchRule启动,监听地址", slog.String("addr", cfg.MeiliSearch.Addr))

@@ -2,96 +2,118 @@ package meili
 
 import (
 	"github.com/meilisearch/meilisearch-go"
-	cmap "github.com/orcaman/concurrent-map/v2"
+	"github.com/samber/lo"
 	"log/slog"
 	"main/common/event"
 	"main/common/event/rule"
+	"sync"
 )
 
 type ClientService struct {
 	Client        meilisearch.ServiceManager
 	Rule          *rule.Server
 	ChannelClient *rule.ChannelClient
-	IndexMap      cmap.ConcurrentMap[string, bool]
+	IndexMap      sync.Map // map[string]struct{}
 }
 
-// asyncDataChange 同步数据变化
+// 启动数据监听与同步
 func (cs *ClientService) asyncDataChange() {
 	ch := cs.ChannelClient.Chan
 	for {
 		select {
 		case evt, ok := <-ch:
 			if !ok {
-				return // 通道已关闭
-			}
-			// 创建索引或忽略
-			index, err := cs.CreateIndexOrIgnore(evt.Table)
-			if err != nil {
-				slog.Error("创建索引失败", slog.String("index", evt.Table.ObtainTableName()), slog.Any("error", err))
+				slog.Info("MeiliSearch监听通道已关闭")
 				return
 			}
-			// 根据事件类型处理数据变化
+			index, err := cs.CreateIndexOrIgnore(evt.Table)
+			if err != nil {
+				slog.Error("创建或获取MeiliSearch索引失败", slog.String("table", evt.Table.ObtainTableName()), slog.Any("error", err))
+				return
+			}
 			switch evt.EventType {
 			case event.Insert:
-				err = cs.insertDataToMeili(index, evt.SaveData)
+				_, err := cs.Client.Index(index).AddDocuments(lo.Map(evt.SaveData, func(item *event.SaveData, _ int) event.RowData {
+					return item.RowData
+				}))
 				if err != nil {
-					slog.Error("插入数据到MeiliSearch失败", slog.Any("error", err))
-				}
-			case event.Update:
-				err := cs.updateDataToMeili(index, evt.EditData)
-				if err != nil {
-					slog.Error("更新数据到MeiliSearch失败", slog.Any("error", err))
+					slog.Error("插入MeiliSearch文档失败", err)
+					return
 				}
 			case event.Delete:
-				err := cs.deleteDataToMeili(evt)
+				_, err := cs.Client.Index(index).DeleteDocuments(lo.Map(evt.DeleteData, func(item *event.DeleteData, _ int) string {
+					return item.RowData.PrimaryKey()
+				}))
 				if err != nil {
-					slog.Error("删除数据到MeiliSearch失败", slog.Any("error", err))
+					slog.Error("删除MeiliSearch文档失败", err)
+					return
+				}
+			case event.Update:
+				_, err := cs.Client.Index(index).UpdateDocuments(lo.Map(evt.EditData, func(item *event.EditData, _ int) event.RowData {
+					rowData := item.UnChangeRowData
+					for f, v := range item.EditFieldValues {
+						rowData[f] = v.After
+					}
+					return rowData
+				}))
+				if err != nil {
+					slog.Error("修改MeiliSearch文档失败", err)
+					return
 				}
 			}
 		}
 	}
 }
 
+// CreateIndexOrIgnore 创建索引（若不存在）
 func (cs *ClientService) CreateIndexOrIgnore(table *event.Table) (string, error) {
 	tableName := table.ObtainTableName()
-	if cs.IndexMap.Has(tableName) {
+
+	if _, ok := cs.IndexMap.Load(tableName); ok {
 		return tableName, nil
 	}
-	indexConfig := &meilisearch.IndexConfig{
+
+	// double check
+	_, loaded := cs.IndexMap.LoadOrStore(tableName, struct{}{})
+	if loaded {
+		return tableName, nil
+	}
+
+	task, err := cs.Client.CreateIndex(&meilisearch.IndexConfig{
 		Uid:        tableName,
 		PrimaryKey: "id",
-	}
-	// 创建索引
-	task, err := cs.Client.CreateIndex(indexConfig)
+	})
 	if err != nil {
 		slog.Error("创建MeiliSearch索引失败", slog.String("index", tableName), slog.Any("error", err))
+		cs.IndexMap.Delete(tableName) // 创建失败清理
 		return "", err
 	}
+
 	slog.Info("成功创建MeiliSearch索引", slog.String("index", task.IndexUID))
-	cs.IndexMap.Set(tableName, true)
 	return task.IndexUID, nil
 }
 
+// 插入文档
 func (cs *ClientService) insertDataToMeili(index string, data *event.SaveData) error {
 	_, err := cs.Client.Index(index).AddDocuments([]any{data.RowData})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
+// 更新文档
 func (cs *ClientService) updateDataToMeili(index string, data *event.EditData) error {
 	rowData := data.UnChangeRowData
 	for f, v := range data.EditFieldValues {
 		rowData[f] = v.After
 	}
 	_, err := cs.Client.Index(index).UpdateDocuments([]any{rowData})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
-func (cs *ClientService) deleteDataToMeili(evt *event.Data) error {
-	return nil
+// 删除文档
+func (cs *ClientService) deleteDataToMeili(index string, data *event.DeleteData) error {
+	_, err := cs.Client.Index(index).DeleteDocument(data.RowData.PrimaryKey())
+	if err != nil {
+		slog.Error("删除MeiliSearch文档失败", slog.String("index", index), slog.Any("error", err))
+	}
+	return err
 }

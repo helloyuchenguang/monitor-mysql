@@ -7,54 +7,50 @@ import (
 )
 
 // ToEditEventData 从行数据中获取更新信息
-func ToEditEventData(tableSchema, tableName string, cols []schema.TableColumn, before, after []any) *event.Data {
-	// 更新列
-	// 列信息
-	var columns []*event.Column
-	// 记录旧值和新值
-	editData := event.NewEditDataWithSize(len(cols))
-	for idx, col := range cols {
-		oldVal := before[idx]
-		newVal := after[idx]
-		colName := col.Name
+func ToEditEventData(tableSchema, tableName string, cols []schema.TableColumn, rows [][]any) *event.Data {
+	var editDataList []*event.EditData
+	for i := 0; i < len(rows); i += 2 {
+		before := rows[i]  // 旧数据
+		after := rows[i+1] // 新数据
+		// 记录旧值和新值
+		editData := event.NewEditDataWithSize(len(cols))
+		for idx, col := range cols {
+			oldVal := before[idx]
+			newVal := after[idx]
+			colName := col.Name
 
-		if oldVal == nil && newVal == nil {
-			continue
-		}
-		// 对于type == []uint8的列，进行转换
-		colValType := reflect.TypeOf(oldVal)
-		switch colValType {
-		case reflect.TypeOf([]uint8{}):
-			if col.RawType == "text" {
-				oldVal = string(oldVal.([]uint8))
-				newVal = string(newVal.([]uint8))
+			if oldVal == nil && newVal == nil {
+				continue
+			}
+			// 对于type == []uint8的列，进行转换
+			colValType := reflect.TypeOf(oldVal)
+			switch colValType {
+			case reflect.TypeOf([]uint8{}):
+				if col.RawType == "text" {
+					oldVal = string(oldVal.([]uint8))
+					newVal = string(newVal.([]uint8))
+				}
+			}
+
+			// 如果旧值和新值不相等，则记录更新信息
+			if oldVal != newVal {
+				editData.EditFieldValues[colName] = &event.EditFieldValue{
+					Before: oldVal,
+					After:  newVal,
+				}
+			} else {
+				// 记录未更改的值
+				if newVal != nil {
+					editData.UnChangeRowData[col.Name] = newVal
+				}
 			}
 		}
-
-		// 封装列信息
-		column := event.Column{
-			Name:    colName,
-			RowType: col.RawType,
-		}
-		columns = append(columns, &column)
-
-		// 如果旧值和新值不相等，则记录更新信息
-		if oldVal != newVal {
-			editData.EditFieldValues[colName] = &event.EditFieldValue{
-				Before: oldVal,
-				After:  newVal,
-			}
-		} else {
-			// 记录未更改的值
-			if newVal != nil {
-				editData.UnChangeRowData[col.Name] = newVal
-			}
-		}
+		editDataList = append(editDataList, editData)
 	}
 	return &event.Data{
 		EventType: event.Update,
-		Table:     event.NewTable(tableSchema, tableName, columns),
-		EditData:  editData,
+		Table:     event.NewTable(tableSchema, tableName, cols),
+		EditData:  editDataList,
 	}
 
 }

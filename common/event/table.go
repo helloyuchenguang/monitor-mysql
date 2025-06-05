@@ -3,6 +3,8 @@ package event
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-mysql-org/go-mysql/schema"
+	"github.com/samber/lo"
 )
 
 // RowData 行数据
@@ -31,6 +33,14 @@ func (rd RowData) ConvertMapStrStr() map[string]string {
 	return result
 }
 
+// PrimaryKey 获取主键值
+func (rd RowData) PrimaryKey() string {
+	if id, ok := rd["id"]; ok {
+		return fmt.Sprintf("%v", id)
+	}
+	return ""
+}
+
 // EventType 事件类型
 type EventType string
 
@@ -51,11 +61,16 @@ func (t *Table) ObtainTableName() string {
 	return fmt.Sprintf("%s_%s", t.Schema, t.Table)
 }
 
-func NewTable(schema string, table string, columns []*Column) *Table {
+func NewTable(schemaName string, table string, cols []schema.TableColumn) *Table {
 	return &Table{
-		Schema:  schema,
-		Table:   table,
-		Columns: columns,
+		Schema: schemaName,
+		Table:  table,
+		Columns: lo.Map(cols, func(item schema.TableColumn, _ int) *Column {
+			return &Column{
+				Name:    item.Name,
+				RowType: item.RawType,
+			}
+		}),
 	}
 }
 
@@ -65,11 +80,11 @@ type Column struct {
 }
 
 type Data struct {
-	EventType  EventType   `json:"eventType"`  // 事件类型
-	Table      *Table      `json:"table"`      // 事件对应的表信息
-	SaveData   *SaveData   `json:"saveData"`   // 插入事件数据
-	EditData   *EditData   `json:"editData"`   // 编辑事件数据
-	DeleteData *DeleteData `json:"deleteData"` // 删除事件数据
+	EventType  EventType     `json:"eventType"`  // 事件类型
+	Table      *Table        `json:"table"`      // 事件对应的表信息
+	SaveData   []*SaveData   `json:"saveData"`   // 插入事件数据
+	DeleteData []*DeleteData `json:"deleteData"` // 删除事件数据
+	EditData   []*EditData   `json:"editData"`   // 编辑事件数据
 }
 
 func (data *Data) ToJson() string {

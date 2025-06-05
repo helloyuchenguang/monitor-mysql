@@ -28,11 +28,11 @@ message EventTableRowReply {
   // 表结构
   TableStructReply table = 2;
   // 插入信息
-  EventInsertInfoReply saveData = 3;
+  repeated EventInsertInfoReply saveData = 3;
   // 删除信息
-  EventDeleteInfoReply deleteData = 4;
+  repeated EventDeleteInfoReply deleteData = 4;
   // 修改信息
-  EventUpdateInfoReply editData = 5;
+  repeated EventUpdateInfoReply editData = 5;
 }
 
 // 表结构信息
@@ -78,7 +78,7 @@ message ColumnValueReply {
 // 删除信息
 message EventDeleteInfoReply{
   // 删除的行数据
-  map<string, string> rowData = 2;
+  map<string, string> rowData = 1;
 }
 
 
