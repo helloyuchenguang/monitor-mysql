@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"log/slog"
 	"os"
+	"regexp"
 )
 
 // Config 配置文件结构体
@@ -23,9 +24,22 @@ type SubscribeServerConfig struct {
 }
 
 type WatchHandler struct {
-	TableRegex       string           `yaml:"tableRegex"`
+	TableRegexp      *regexp.Regexp
+	Table            string           `yaml:"table"`
 	MeiliSearchIndex MeiliSearchIndex `yaml:"meiliSearchIndex"`
 	Rules            []string         `yaml:"rules"`
+}
+
+// BuildRegexp 构建正则表达式
+func (w *WatchHandler) buildRegexp() {
+	if w.Table == "" {
+		panic("tableRegex不能为空")
+	}
+	reg, err := regexp.Compile(w.Table)
+	if err != nil {
+		panic("无法编译正则表达式: " + w.Table)
+	}
+	w.TableRegexp = reg
 }
 
 type DatabaseConfig struct {
@@ -81,17 +95,12 @@ func LoadConfig(cfgFile string) *Config {
 	if err := decoder.Decode(&cfg); err != nil {
 		panic("无法解析配置文件: " + cfgFile)
 	}
-	// rules 去重
 	for _, handler := range cfg.WatchHandlers {
+		// 编译正则表达式
+		handler.buildRegexp()
+		// rules 去重
 		handler.Rules = lo.Uniq(handler.Rules)
 	}
 	slog.Info(fmt.Sprintf("读取配置文件: %-v", cfg))
 	return &cfg
-}
-
-// ExistsRuleName 检查规则名称是否存在于配置中
-func (c *Config) ExistsRuleName(ruleName string) bool {
-	return lo.SomeBy(c.WatchHandlers, func(handler WatchHandler) bool {
-		return lo.Contains(handler.Rules, ruleName)
-	})
 }

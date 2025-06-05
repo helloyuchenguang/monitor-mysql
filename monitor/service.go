@@ -20,50 +20,48 @@ type CanalMonitorService struct {
 	meiliService *meili.ClientService
 }
 
-type WatchHandlers []struct {
-	TableRegex string
-	Rules      []string
+type WatchHandler struct {
+	tableRegexp *regexp.Regexp
+	rules       []string
 }
 
 type Database struct {
-	Addr              string
-	User              string
-	Password          string
-	Flavor            string
-	ServerID          uint32
-	DumpExecutionPath string
-	IncludeTableRegex []string
+	addr              string
+	user              string
+	password          string
+	flavor            string
+	serverID          uint32
+	dumpExecutionPath string
+	includeTableRegex []string
 }
 
 type Config struct {
-	Database      Database
-	WatchHandlers WatchHandlers
+	Database      *Database
+	WatchHandlers []*WatchHandler
 }
 
 // NewMonitorConfig 根据配置文件创建监控配置
 func NewMonitorConfig(cfg *config.Config) *Config {
 	cfgWatchHandlers := cfg.WatchHandlers
 	// 创建配置
-	watchHandlers := make(WatchHandlers, len(cfgWatchHandlers))
-	for i, handler := range cfgWatchHandlers {
-		watchHandlers[i] = struct {
-			TableRegex string
-			Rules      []string
-		}{
-			TableRegex: handler.TableRegex,
-			Rules:      handler.Rules,
-		}
+	var watchHandlers []*WatchHandler
+	for _, handler := range cfgWatchHandlers {
+		watchHandlers = append(watchHandlers, &WatchHandler{
+			tableRegexp: handler.TableRegexp,
+			rules:       handler.Rules,
+		})
+	}
+	database := &Database{
+		addr:              cfg.Database.Addr,
+		user:              cfg.Database.User,
+		password:          cfg.Database.Password,
+		flavor:            cfg.Database.Flavor,
+		serverID:          cfg.Database.ServerID,
+		dumpExecutionPath: cfg.Database.DumpExecutionPath,
+		includeTableRegex: cfg.Database.IncludeTableRegex,
 	}
 	return &Config{
-		Database: Database{
-			Addr:              cfg.Database.Addr,
-			User:              cfg.Database.User,
-			Password:          cfg.Database.Password,
-			Flavor:            cfg.Database.Flavor,
-			ServerID:          cfg.Database.ServerID,
-			DumpExecutionPath: cfg.Database.DumpExecutionPath,
-			IncludeTableRegex: cfg.Database.IncludeTableRegex,
-		},
+		Database:      database,
 		WatchHandlers: watchHandlers,
 	}
 }
@@ -87,16 +85,8 @@ func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 	watchRegexps := make([]*WatchRegexp, len(m.cfg.WatchHandlers))
 	// 表格正则对应的监控规则
 	for i, wt := range m.cfg.WatchHandlers {
-		rules := make([]rule.MonitorRuler, int(math.Max(float64(len(wt.Rules)), 1)))
-		re, err := regexp.Compile(wt.TableRegex)
-		if err != nil {
-			panic("编译正则失败: " + err.Error())
-		}
-		// 如果没有规则,使用默认规则
-		if len(wt.Rules) == 0 {
-			panic("规则不能为空,请检查配置")
-		}
-		for j, ruleName := range wt.Rules {
+		rules := make([]rule.MonitorRuler, int(math.Max(float64(len(wt.rules)), 1)))
+		for j, ruleName := range wt.rules {
 			switch ruleName {
 			case web.RuleName:
 				if m.sseService == nil {
@@ -119,7 +109,7 @@ func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 
 		}
 		watchRegexps[i] = &WatchRegexp{
-			Regexp: re,
+			Regexp: wt.tableRegexp,
 			Rules:  rules,
 		}
 	}
@@ -131,13 +121,13 @@ func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 // newCanalConfig 根据配置文件,创建canal.Config
 func (m *CanalMonitorService) newCanalConfig() *canal.Config {
 	canalCfg := canal.NewDefaultConfig()
-	canalCfg.Addr = m.cfg.Database.Addr
-	canalCfg.User = m.cfg.Database.User
-	canalCfg.Password = m.cfg.Database.Password
-	canalCfg.Flavor = m.cfg.Database.Flavor
-	canalCfg.ServerID = m.cfg.Database.ServerID
-	canalCfg.Dump.ExecutionPath = m.cfg.Database.DumpExecutionPath
-	canalCfg.IncludeTableRegex = m.cfg.Database.IncludeTableRegex
+	canalCfg.Addr = m.cfg.Database.addr
+	canalCfg.User = m.cfg.Database.user
+	canalCfg.Password = m.cfg.Database.password
+	canalCfg.Flavor = m.cfg.Database.flavor
+	canalCfg.ServerID = m.cfg.Database.serverID
+	canalCfg.Dump.ExecutionPath = m.cfg.Database.dumpExecutionPath
+	canalCfg.IncludeTableRegex = m.cfg.Database.includeTableRegex
 	return canalCfg
 }
 

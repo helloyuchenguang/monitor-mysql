@@ -12,7 +12,7 @@ database:
 watchHandlers:
   - table: "qucdin_lcoal\\.*"
     meiliSearchIndex:
-      index: "{{.SchemaName}}_{{.TableName}}"
+      index: "tpl_node"
       # 搜索字段
       searchers:
         - "title"
