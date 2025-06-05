@@ -38,7 +38,7 @@ type ClientService struct {
 func NewMeiliConfig(cfg *config.Config) *Config {
 	meiliCfg := cfg.SubscribeServerConfig.Meili
 	// 构建索引配置
-	indexConfigs := lo.Map(cfg.WatchHandlers, func(item config.WatchHandler, _ int) *IndexConfig {
+	indexConfigs := lo.Map(cfg.WatchHandlers, func(item *config.WatchHandler, _ int) *IndexConfig {
 		// 创建索引配置
 		indexConfig := &IndexConfig{
 			tableRegex: item.TableRegexp,
@@ -84,8 +84,10 @@ func NewMeiliService(cfg *Config) *ClientService {
 			return
 		}
 	}()
+	// 删除所有索引
+	service.DeleteAllIndexes()
 	// 启动异步数据变更监听
 	go service.asyncDataChange()
-	slog.Info("MeiliSearchRule启动,监听地址", slog.String("addr", cfg.addr))
+
 	return service
 }

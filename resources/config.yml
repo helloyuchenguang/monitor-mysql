@@ -5,12 +5,13 @@ database:
   flavor: mysql
   serverId: 1001
   # 禁用 mysqldump
-  dump_execution_path: ""
+  dumpExecutionPath: ""
   includeTableRegex:
     - "^qucdin_local\\.*"
 
 watchHandlers:
-  - table: "qucdin_lcoal\\.*"
+  - table: "qucdin_lcoal\\.business_data.tpl_node_*"
+    tableTest: qucdin_lcoal.business_data.tpl_node_v8iuq3pqxl061bd1
     meiliSearchIndex:
       index: "tpl_node"
       # 搜索字段

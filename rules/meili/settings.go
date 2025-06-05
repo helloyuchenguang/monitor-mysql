@@ -83,3 +83,23 @@ func (cs *ClientService) SetExperimentalFeatures() error {
 	features.SetEditDocumentsByFunction(true)
 	return nil
 }
+
+// DeleteAllIndexes 删除所有索引
+func (cs *ClientService) DeleteAllIndexes() error {
+	// 删除所有索引
+	indexes, err := cs.ListIndexes(&meilisearch.IndexesQuery{
+		Limit: 1000, // 设置一个合理的限制
+	})
+	if err != nil {
+		slog.Error("获取MeiliSearch索引失败", slog.Any("error", err))
+		return err
+	}
+	for _, index := range indexes.Results {
+		if _, err := cs.DeleteIndex(index.UID); err != nil {
+			slog.Error("删除MeiliSearch索引失败", slog.String("index", index.UID), slog.Any("error", err))
+			return err
+		}
+		slog.Info("成功删除MeiliSearch索引", slog.String("index", index.UID))
+	}
+	return nil
+}

@@ -12,7 +12,7 @@ import (
 // Config 配置文件结构体
 type Config struct {
 	Database              DatabaseConfig        `yaml:"database"`
-	WatchHandlers         []WatchHandler        `yaml:"watchHandlers"`
+	WatchHandlers         []*WatchHandler       `yaml:"watchHandlers"`
 	SubscribeServerConfig SubscribeServerConfig `yaml:"subscribeServerConfig"` // 订阅服务器配置
 }
 
@@ -26,6 +26,7 @@ type SubscribeServerConfig struct {
 type WatchHandler struct {
 	TableRegexp      *regexp.Regexp
 	Table            string           `yaml:"table"`
+	TableTest        string           `yaml:"tableTest"` // 测试表名
 	MeiliSearchIndex MeiliSearchIndex `yaml:"meiliSearchIndex"`
 	Rules            []string         `yaml:"rules"`
 }
@@ -38,6 +39,12 @@ func (w *WatchHandler) buildRegexp() {
 	reg, err := regexp.Compile(w.Table)
 	if err != nil {
 		panic("无法编译正则表达式: " + w.Table)
+	}
+	// 如果 TableTest 不为空，则使用 TableTest 进行匹配
+	if w.TableTest != "" {
+		if !reg.MatchString(w.TableTest) {
+			panic("表名测试失败: " + w.TableTest + " 不匹配正则表达式: " + w.Table)
+		}
 	}
 	w.TableRegexp = reg
 }

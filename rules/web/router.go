@@ -9,6 +9,7 @@ import (
 
 // StartServer 启动Web服务器
 func (w *SSERuleService) StartServer() {
+	//gin.SetMode(gin.ReleaseMode)
 	// gin web
 	router := gin.Default()
 	router.Static("/static", "./static")

@@ -9,6 +9,7 @@ import (
 
 // asyncDataChange 启动数据监听与同步
 func (cs *ClientService) asyncDataChange() {
+	slog.Info("MeiliSearchRule启动,监听地址", slog.String("addr", cs.config.addr))
 	ch := cs.channelClient.Chan
 	const (
 		bufferSize = 1000
@@ -49,7 +50,10 @@ func (cs *ClientService) flushToMeiliSearch(dataList []*event.Data) {
 	deleteIDsMap := make(map[string][]string)
 	// 遍历数据列表，分类处理
 	for _, data := range dataList {
-		index := data.Table.ObtainTableName()
+		index, err := cs.CreateIndexOrIgnore(data.Table)
+		if err != nil {
+			continue
+		}
 		switch data.EventType {
 		case event.Insert:
 			docsMap[index] = append(docsMap[index], lo.Map(data.SaveData, func(item *event.SaveData, _ int) event.RowData {
