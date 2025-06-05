@@ -3,14 +3,26 @@ database:
   user: root
   password: quc@2022@din
   flavor: mysql
-  server_id: 1001
+  serverId: 1001
   # 禁用 mysqldump
   dump_execution_path: ""
-  include_table_regex:
+  includeTableRegex:
     - "^qucdin_local\\.*"
 
-watch_handlers:
+watchHandlers:
   - table: "qucdin_lcoal\\.*"
+    meiliSearch:
+      index: "{{.SchemaName}}_{{.TableName}}"
+      # 搜索字段
+      searchableAttributes:
+        - "title"
+      # 筛选字段
+      filterableAttributes:
+        - "id"
+      # 排序字段
+      sortableAttributes:
+        - "created_at"
+        - "updated_at"
     rules:
       - GRPCRule
       - SSERule
@@ -19,6 +31,6 @@ web:
   addr: ":10820"
 grpc:
   addr: ":10821"
-meili_search:
-  addr: "http://192.168.60.10:7700"
-  api_key: "root123456"
+meiliSearch:
+  addr: http://192.168.60.10:7700
+  apiKey: root123456

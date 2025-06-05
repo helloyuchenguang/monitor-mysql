@@ -11,13 +11,13 @@ import (
 )
 
 type ClientService struct {
-	Client        meilisearch.ServiceManager
+	meilisearch.ServiceManager
 	Rule          *rule.Server
 	ChannelClient *rule.ChannelClient
 	IndexMap      sync.Map // map[string]struct{}
 }
 
-// 启动数据监听与同步
+// asyncDataChange 启动数据监听与同步
 func (cs *ClientService) asyncDataChange() {
 	ch := cs.ChannelClient.Chan
 	const (
@@ -67,7 +67,7 @@ func (cs *ClientService) CreateIndexOrIgnore(table *event.Table) (string, error)
 		return tableName, nil
 	}
 
-	task, err := cs.Client.CreateIndex(&meilisearch.IndexConfig{
+	task, err := cs.CreateIndex(&meilisearch.IndexConfig{
 		Uid:        tableName,
 		PrimaryKey: "id",
 	})
@@ -81,6 +81,7 @@ func (cs *ClientService) CreateIndexOrIgnore(table *event.Table) (string, error)
 	return task.IndexUID, nil
 }
 
+// flushToMeiliSearch 将数据列表同步到 MeiliSearch
 func (cs *ClientService) flushToMeiliSearch(dataList []*event.Data) {
 	docsMap := make(map[string][]event.RowData)
 	deleteIDsMap := make(map[string][]string)
@@ -112,7 +113,7 @@ func (cs *ClientService) flushToMeiliSearch(dataList []*event.Data) {
 		if len(docs) == 0 {
 			continue
 		}
-		if _, err := cs.Client.Index(index).AddDocuments(docs); err != nil {
+		if _, err := cs.Index(index).AddDocuments(docs); err != nil {
 			slog.Error("MeiliSearch添加文档失败", slog.String("index", index), slog.Any("error", err))
 		}
 	}
@@ -122,8 +123,35 @@ func (cs *ClientService) flushToMeiliSearch(dataList []*event.Data) {
 		if len(delIDs) == 0 {
 			continue
 		}
-		if _, err := cs.Client.Index(index).DeleteDocuments(delIDs); err != nil {
+		if _, err := cs.Index(index).DeleteDocuments(delIDs); err != nil {
 			slog.Error("MeiliSearch删除文档失败", slog.String("index", index), slog.Any("error", err))
 		}
 	}
+}
+
+// SettingsAttributes 更新索引的设置
+func (cs *ClientService) SettingsAttributes(index string, searchers, filters, sorts []string) error {
+	// 设置索引的可搜索属性
+	settings := &meilisearch.Settings{
+		SearchableAttributes: searchers,
+		FilterableAttributes: filters,
+		SortableAttributes:   sorts,
+	}
+	if _, err := cs.Index(index).UpdateSettings(settings); err != nil {
+		slog.Error("MeiliSearch更新索引设置失败", slog.String("index", index), slog.Any("error", err))
+		return err
+	}
+	slog.Info("成功更新MeiliSearch索引设置", slog.String("index", index))
+	return nil
+}
+
+// SetExperimentalFeatures 设置实验性功能
+func (cs *ClientService) SetExperimentalFeatures() error {
+	// 这里可以添加更多实验性功能的设置
+	features := cs.ExperimentalFeatures()
+	// 开启CONTAINS 和 START WITH 功能
+	features.SetContainsFilter(true)
+	// 开启函数编辑文档
+	features.SetEditDocumentsByFunction(true)
+	return nil
 }

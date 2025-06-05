@@ -18,3 +18,17 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 # grpc-gen-go
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ```
+
+
+## Meilisearch
+
+```shell
+# 开启 contains 预览特性
+# containsFilter: 允许在过滤器中使用 contains 操作符(同时启用start with)
+# editDocumentsByFunction: 允许通过函数编辑文档
+curl -X PATCH 'MEILISEARCH_URL/experimental-features/' -H 'Content-Type: application/json' \
+--data-binary '{
+"containsFilter": true,
+"editDocumentsByFunction": true,
+}'
+```

@@ -11,14 +11,14 @@ import (
 // Config 配置文件结构体
 type Config struct {
 	Database      DatabaseConfig    `yaml:"database"`
-	WatchHandlers []WatchHandler    `yaml:"watch_handlers"`
+	WatchHandlers []WatchHandler    `yaml:"watchHandlers"`
 	Web           WebConfig         `yaml:"web"`
 	GRPC          GRPCConfig        `yaml:"grpc"`
-	MeiliSearch   MeiliSearchConfig `yaml:"meili_search"`
+	MeiliSearch   MeiliSearchConfig `yaml:"meiliSearch"`
 }
 
 type WatchHandler struct {
-	TableRegex string   `yaml:"table_regex"`
+	TableRegex string   `yaml:"tableRegex"`
 	Rules      []string `yaml:"rules"`
 }
 
@@ -27,9 +27,9 @@ type DatabaseConfig struct {
 	User              string   `yaml:"user"`
 	Password          string   `yaml:"password"`
 	Flavor            string   `yaml:"flavor"`
-	ServerID          uint32   `yaml:"server_id"`
-	DumpExecutionPath string   `yaml:"dump_execution_path"`
-	IncludeTableRegex []string `yaml:"include_table_regex"`
+	ServerID          uint32   `yaml:"serverId"`
+	DumpExecutionPath string   `yaml:"dumpExecutionPath"`
+	IncludeTableRegex []string `yaml:"includeTableRegex"`
 }
 
 type WebConfig struct {
@@ -41,8 +41,8 @@ type GRPCConfig struct {
 }
 
 type MeiliSearchConfig struct {
-	Addr   string `yaml:"addr"`    // MeiliSearch服务地址
-	APIKey string `yaml:"api_key"` // MeiliSearch API Key
+	Addr   string `yaml:"addr"`   // MeiliSearch服务地址
+	APIKey string `yaml:"apiKey"` // MeiliSearch API Key
 }
 
 // LoadConfig 加载配置文件
