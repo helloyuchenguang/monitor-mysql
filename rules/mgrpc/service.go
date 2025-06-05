@@ -6,10 +6,11 @@ import (
 	"main/common/event/rule"
 )
 
-const RuleName = "GRPCRule"
+const RuleName = "grpc"
 
 type Config struct {
-	Addr string `json:"addr"` // gRPC服务地址
+	Enable bool   // 是否启用GRPC规则服务
+	Addr   string // gRPC服务地址
 }
 
 // GRPCRuleService 构建时需要注入的类型
@@ -18,14 +19,23 @@ type GRPCRuleService struct {
 	Rule *rule.Server
 }
 
+// NewGRPCConfig 创建GRPC服务配置
+func NewGRPCConfig(cfg *config.Config) *Config {
+	grpcCfg := cfg.SubscribeServerConfig.Grpc
+	return &Config{
+		Enable: grpcCfg.Enable,
+		Addr:   grpcCfg.Addr,
+	}
+}
+
 // NewGRPCRuleService 创建一个新的GRPCRuleServer实例
-func NewGRPCRuleService(cfg *config.Config) *GRPCRuleService {
-	if !cfg.ExistsRuleName(RuleName) {
-		slog.Info("配置中不存在GRPCRule，不创建GRPC服务")
+func NewGRPCRuleService(cfg *Config) *GRPCRuleService {
+	if !cfg.Enable {
+		slog.Info("GRPC规则服务未启用", slog.String("addr", cfg.Addr))
 		return nil
 	}
 	service := &GRPCRuleService{
-		cfg:  &Config{Addr: cfg.GRPC.Addr},
+		cfg:  cfg,
 		Rule: rule.NewServer(),
 	}
 	go service.RunGrpcCanal()

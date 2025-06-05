@@ -18,27 +18,30 @@ import (
 
 // 初始化SSE服务
 func InitSSEService(cfg *config.Config) *web.SSERuleService {
-	sseRuleService := web.NewWebSSERuleService(cfg)
+	webConfig := web.NewSSEConfig(cfg)
+	sseRuleService := web.NewWebSSERuleService(webConfig)
 	return sseRuleService
 }
 
 // 初始化GRPC服务
 func InitGRPCRuleService(cfg *config.Config) *mgrpc.GRPCRuleService {
-	grpcRuleService := mgrpc.NewGRPCRuleService(cfg)
+	mgrpcConfig := mgrpc.NewGRPCConfig(cfg)
+	grpcRuleService := mgrpc.NewGRPCRuleService(mgrpcConfig)
 	return grpcRuleService
 }
 
 // 初始化MeiliSearch服务
 func InitMeiliService(cfg *config.Config) *meili.ClientService {
-	clientService := meili.NewMeiliService(cfg)
+	meiliConfig := meili.NewMeiliConfig(cfg)
+	clientService := meili.NewMeiliService(meiliConfig)
 	return clientService
 }
 
 // 初始化Monitor服务
 func InitMonitorService(cfg *config.Config) *monitor.CanalMonitorService {
-	sseRuleService := web.NewWebSSERuleService(cfg)
-	grpcRuleService := mgrpc.NewGRPCRuleService(cfg)
-	clientService := meili.NewMeiliService(cfg)
+	sseRuleService := InitSSEService(cfg)
+	grpcRuleService := InitGRPCRuleService(cfg)
+	clientService := InitMeiliService(cfg)
 	canalMonitorService := monitor.NewMonitorService(cfg, sseRuleService, grpcRuleService, clientService)
 	return canalMonitorService
 }

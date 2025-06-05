@@ -24,22 +24,18 @@ watchHandlers:
         - "created_at"
         - "updated_at"
     rules:
-      - GRPCRule
-      - SSERule
-      - MeiliSearchRule
+      - grpc
+      - sse
+      - meili
 
-
-web:
-  addr: ":10820"
-
-grpc:
-  addr: ":10821"
-
-meiliSearch:
-  addr: http://192.168.60.10:7700
-  apiKey: root123456
-
-rule:
-  grpc: true
-  sse: true
-  meiliSearch: true
+subscribeServerConfig:
+  grpc:
+    enable: true
+    addr: ":10821"
+  sse:
+    enable: true
+    addr: ":10820"
+  meili:
+    enable: true
+    addr: http://192.168.60.10:7700
+    apiKey: root123456

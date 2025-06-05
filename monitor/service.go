@@ -94,31 +94,29 @@ func (m *CanalMonitorService) newMyEventHandler() *CustomEventHandler {
 		}
 		// 如果没有规则,使用默认规则
 		if len(wt.Rules) == 0 {
-			slog.Error(fmt.Sprintf("表 %s 没有监控规则,使用默认监控规则", wt.TableRegex))
-			rules[i] = m.sseService.Rule
-			continue
-		} else {
-			for j, ruleName := range wt.Rules {
-				switch ruleName {
-				case web.RuleName:
-					if m.sseService == nil {
-						panic("SSE规则服务未初始化")
-					}
-					rules[j] = m.sseService.Rule
-				case mgrpc.RuleName:
-					if m.grpcService == nil {
-						panic("gRPC规则服务未初始化")
-					}
-					rules[j] = m.grpcService.Rule
-				case meili.RuleName:
-					if m.meiliService == nil {
-						panic("MeiliSearch规则服务未初始化")
-					}
-					rules[j] = m.meiliService.Rule
-				default:
-					panic("规则 " + ruleName + " 不存在,请检查配置")
+			panic("规则不能为空,请检查配置")
+		}
+		for j, ruleName := range wt.Rules {
+			switch ruleName {
+			case web.RuleName:
+				if m.sseService == nil {
+					panic("SSE规则服务未初始化")
 				}
+				rules[j] = m.sseService.Rule
+			case mgrpc.RuleName:
+				if m.grpcService == nil {
+					panic("gRPC规则服务未初始化")
+				}
+				rules[j] = m.grpcService.Rule
+			case meili.RuleName:
+				if m.meiliService == nil {
+					panic("MeiliSearch规则服务未初始化")
+				}
+				rules[j] = m.meiliService.Rule
+			default:
+				panic("规则 " + ruleName + " 不存在,请检查配置")
 			}
+
 		}
 		watchRegexps[i] = &WatchRegexp{
 			Regexp: re,

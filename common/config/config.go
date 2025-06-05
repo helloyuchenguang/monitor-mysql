@@ -10,11 +10,16 @@ import (
 
 // Config 配置文件结构体
 type Config struct {
-	Database      DatabaseConfig `yaml:"database"`
-	WatchHandlers []WatchHandler `yaml:"watchHandlers"`
-	Web           WebConfig      `yaml:"web"`
-	GRPC          GRPCConfig     `yaml:"grpc"`
-	MeiliSearch   MeiliSearch    `yaml:"meiliSearch"`
+	Database              DatabaseConfig        `yaml:"database"`
+	WatchHandlers         []WatchHandler        `yaml:"watchHandlers"`
+	SubscribeServerConfig SubscribeServerConfig `yaml:"subscribeServerConfig"` // 订阅服务器配置
+}
+
+// SubscribeServerConfig 订阅服务器配置
+type SubscribeServerConfig struct {
+	Grpc  GRPCConfig        `yaml:"grpc"`  // gRPC规则
+	SSE   SSEConfig         `yaml:"sse"`   // SSE规则
+	Meili MeiliSearchConfig `yaml:"meili"` // MeiliSearch规则
 }
 
 type WatchHandler struct {
@@ -33,17 +38,20 @@ type DatabaseConfig struct {
 	IncludeTableRegex []string `yaml:"includeTableRegex"`
 }
 
-type WebConfig struct {
-	Addr string `yaml:"addr"` // Web服务地址
+type SSEConfig struct {
+	Enable bool   `yaml:"enable"`
+	Addr   string `yaml:"addr"` // Web服务地址
 }
 
 type GRPCConfig struct {
-	Addr string `yaml:"addr"` // gRPC服务地址
+	Enable bool   `yaml:"enable"`
+	Addr   string `yaml:"addr"` // gRPC服务地址
 }
 
-type MeiliSearch struct {
+type MeiliSearchConfig struct {
+	Enable bool   `yaml:"enable"`
 	Addr   string `yaml:"addr"`   // MeiliSearch服务地址
-	APIKey string `yaml:"apiKey"` // MeiliSearch API Key
+	APIKey string `yaml:"apiKey"` // MeiliSearchConfig API Key
 }
 
 type MeiliSearchIndex struct {

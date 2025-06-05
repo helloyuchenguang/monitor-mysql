@@ -5,17 +5,8 @@ import (
 	"github.com/samber/lo"
 	"log/slog"
 	"main/common/event"
-	"main/common/event/rule"
-	"sync"
 	"time"
 )
-
-type ClientService struct {
-	meilisearch.ServiceManager
-	Rule          *rule.Server
-	channelClient *rule.ChannelClient
-	IndexMap      sync.Map // map[string]struct{}
-}
 
 // asyncDataChange 启动数据监听与同步
 func (cs *ClientService) asyncDataChange() {
