@@ -12,9 +12,11 @@ const RuleName = "MeiliSearchRule"
 
 // NewMeiliService 创建一个新的MeiliSearch客户端服务
 func NewMeiliService(cfg *config.Config) *ClientService {
+	// 检查配置中是否存在MeiliSearch规则
 	if !cfg.ExistsRuleName(RuleName) {
 		return nil
 	}
+
 	// 初始化MeiliSearch客户端
 	client := meilisearch.New(cfg.MeiliSearch.Addr, meilisearch.WithAPIKey(cfg.MeiliSearch.APIKey))
 	// 创建规则服务器实例
@@ -22,7 +24,7 @@ func NewMeiliService(cfg *config.Config) *ClientService {
 	service := &ClientService{
 		ServiceManager: client,
 		Rule:           ruleServer,
-		ChannelClient:  ruleServer.PutNewClient(),
+		channelClient:  ruleServer.PutNewClient(),
 		IndexMap:       sync.Map{},
 	}
 	// 开启MeiliSearch预览功能

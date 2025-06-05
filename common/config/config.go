@@ -10,16 +10,17 @@ import (
 
 // Config 配置文件结构体
 type Config struct {
-	Database      DatabaseConfig    `yaml:"database"`
-	WatchHandlers []WatchHandler    `yaml:"watchHandlers"`
-	Web           WebConfig         `yaml:"web"`
-	GRPC          GRPCConfig        `yaml:"grpc"`
-	MeiliSearch   MeiliSearchConfig `yaml:"meiliSearch"`
+	Database      DatabaseConfig `yaml:"database"`
+	WatchHandlers []WatchHandler `yaml:"watchHandlers"`
+	Web           WebConfig      `yaml:"web"`
+	GRPC          GRPCConfig     `yaml:"grpc"`
+	MeiliSearch   MeiliSearch    `yaml:"meiliSearch"`
 }
 
 type WatchHandler struct {
-	TableRegex string   `yaml:"tableRegex"`
-	Rules      []string `yaml:"rules"`
+	TableRegex       string           `yaml:"tableRegex"`
+	MeiliSearchIndex MeiliSearchIndex `yaml:"meiliSearchIndex"`
+	Rules            []string         `yaml:"rules"`
 }
 
 type DatabaseConfig struct {
@@ -40,9 +41,16 @@ type GRPCConfig struct {
 	Addr string `yaml:"addr"` // gRPC服务地址
 }
 
-type MeiliSearchConfig struct {
+type MeiliSearch struct {
 	Addr   string `yaml:"addr"`   // MeiliSearch服务地址
 	APIKey string `yaml:"apiKey"` // MeiliSearch API Key
+}
+
+type MeiliSearchIndex struct {
+	Index     string   `yaml:"index"`     // MeiliSearch索引名称
+	Searchers []string `yaml:"searchers"` // 搜索字段
+	Filters   []string `yaml:"filters"`   // 过滤字段
+	Sorts     []string `yaml:"sorts"`     // 排序字段
 }
 
 // LoadConfig 加载配置文件

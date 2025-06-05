@@ -13,13 +13,13 @@ import (
 type ClientService struct {
 	meilisearch.ServiceManager
 	Rule          *rule.Server
-	ChannelClient *rule.ChannelClient
+	channelClient *rule.ChannelClient
 	IndexMap      sync.Map // map[string]struct{}
 }
 
 // asyncDataChange 启动数据监听与同步
 func (cs *ClientService) asyncDataChange() {
-	ch := cs.ChannelClient.Chan
+	ch := cs.channelClient.Chan
 	const (
 		bufferSize = 1000
 		interval   = 2 * time.Second

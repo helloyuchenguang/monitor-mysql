@@ -11,26 +11,35 @@ database:
 
 watchHandlers:
   - table: "qucdin_lcoal\\.*"
-    meiliSearch:
+    meiliSearchIndex:
       index: "{{.SchemaName}}_{{.TableName}}"
       # 搜索字段
-      searchableAttributes:
+      searchers:
         - "title"
       # 筛选字段
-      filterableAttributes:
+      filters:
         - "id"
       # 排序字段
-      sortableAttributes:
+      sorts:
         - "created_at"
         - "updated_at"
     rules:
       - GRPCRule
       - SSERule
       - MeiliSearchRule
+
+
 web:
   addr: ":10820"
+
 grpc:
   addr: ":10821"
+
 meiliSearch:
   addr: http://192.168.60.10:7700
   apiKey: root123456
+
+rule:
+  grpc: true
+  sse: true
+  meiliSearch: true
