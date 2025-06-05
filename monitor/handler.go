@@ -50,18 +50,15 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 	}
 	// 根据事件类型生成对应的事件数据
 	dataList := GenerateEventDataList(e)
-	slog.Info(fmt.Sprintf("<UNK> %s.%s <UNK>", tableSchema, tableName))
 	for _, r := range rules {
 		// 如果规则没有客户端连接，则跳过
 		if r.ClientIsEmpty() {
 			continue
 		}
-		go func() {
-			err := r.OnNext(dataList)
-			if err != nil {
-				slog.Error(fmt.Sprintf("处理删除事件失败: %v", err))
-			}
-		}()
+		err := r.OnNext(dataList)
+		if err != nil {
+			slog.Error(fmt.Sprintf("处理删除事件失败: %v", err))
+		}
 	}
 	return nil
 }

@@ -36,7 +36,7 @@ func (rs *Server) PutNewClient() *ChannelClient {
 		// 使用 github.com/google/uuid
 		ID: uuid.New().String(),
 		// 带缓冲防止阻塞
-		Chan: make(chan *event.Data, 1_000),
+		Chan: make(chan *event.Data, 10_000),
 	}
 	rs.clients[cc.ID] = cc
 	slog.Info("添加新客户端", slog.String("clientID", cc.ID))
@@ -55,18 +55,10 @@ func (rs *Server) RemoveClientByID(clientID string) {
 }
 
 func (rs *Server) OnNext(data *event.Data) error {
-	if len(rs.clients) == 1 {
-		// 如果只有一个客户端，直接发送数据
-		for _, client := range rs.clients {
-			forward(client, data)
-			return nil
-		}
-	} else {
-		for _, client := range rs.clients {
-			go func(c *ChannelClient) {
-				forward(c, data)
-			}(client)
-		}
+	for _, client := range rs.clients {
+		go func(c *ChannelClient) {
+			forward(c, data)
+		}(client)
 	}
 	return nil
 }
