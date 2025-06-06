@@ -10,20 +10,21 @@ database:
     - "^qucdin_local\\.*"
 
 watchHandlers:
-  - table: "qucdin_lcoal\\.business_data.tpl_node_*"
-    tableTest: qucdin_lcoal.business_data.tpl_node_v8iuq3pqxl061bd1
+  - table: "qucdin_local\\.business_data.tpl_node_*"
+    tableTest: qucdin_local.business_data.tpl_node_v8iuq3pqxl061bd1
     meiliSearchIndex:
       index: "tpl_node"
       # 搜索字段
       searchers:
-        - "title"
+        - title
+        - belong_project_business_name
       # 筛选字段
       filters:
-        - "id"
+        - id
+        - belong_project_business_code
       # 排序字段
       sorts:
-        - "created_at"
-        - "updated_at"
+        - create_time
     rules:
       - grpc
       - sse

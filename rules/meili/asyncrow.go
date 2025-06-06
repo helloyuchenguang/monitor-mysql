@@ -7,14 +7,17 @@ import (
 	"time"
 )
 
+const (
+	bufferSize = 1000
+	interval   = 2 * time.Second
+)
+
 // asyncDataChange 启动数据监听与同步
 func (cs *ClientService) asyncDataChange() {
 	slog.Info("MeiliSearchRule启动,监听地址", slog.String("addr", cs.config.addr))
 	ch := cs.channelClient.Chan
-	const (
-		bufferSize = 1000
-		interval   = 2 * time.Second
-	)
+	// 确保在函数结束时清理资源
+	defer cs.Rule.RemoveClientByID(cs.channelClient.ID)
 	buffer := make([]*event.Data, 0, bufferSize)
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()

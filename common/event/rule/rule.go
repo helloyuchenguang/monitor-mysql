@@ -56,21 +56,14 @@ func (rs *Server) RemoveClientByID(clientID string) {
 
 func (rs *Server) OnNext(data *event.Data) error {
 	for _, client := range rs.clients {
-		go func(c *ChannelClient) {
-			forward(c, data)
-		}(client)
+		select {
+		case client.Chan <- data:
+		default:
+			// 防止阻塞：可选择丢弃消息或断开慢客户端
+			slog.Warn("丢弃消息", slog.String("clientID", client.ID))
+		}
 	}
 	return nil
-}
-
-// forward 将数据发送到客户端的通道
-func forward(client *ChannelClient, data *event.Data) {
-	select {
-	case client.Chan <- data:
-	default:
-		// 防止阻塞：可选择丢弃消息或断开慢客户端
-		slog.Warn("丢弃消息", slog.String("clientID", client.ID))
-	}
 }
 
 func (rs *Server) ClientIsEmpty() bool {

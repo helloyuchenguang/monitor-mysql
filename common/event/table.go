@@ -57,10 +57,6 @@ type Table struct {
 	Columns []*Column `json:"columns"` // 列信息
 }
 
-func (t *Table) ObtainName() string {
-	return fmt.Sprintf("%s_%s", t.Schema, t.Table)
-}
-
 func (t *Table) ObtainTableName() string {
 	return fmt.Sprintf("%s.%s", t.Schema, t.Table)
 }
@@ -98,6 +94,19 @@ func (data *Data) ToJson() string {
 		return "{}"
 	}
 	return string(jsonData)
+}
+
+func (data *Data) Size() int {
+	switch data.EventType {
+	case Insert:
+		return len(data.SaveData)
+
+	case Update:
+		return len(data.EditData)
+	case Delete:
+		return len(data.DeleteData)
+	}
+	return 0
 }
 
 // EditData 编辑事件数据

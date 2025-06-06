@@ -20,6 +20,7 @@ type WatchRegexp struct {
 type CustomEventHandler struct {
 	canal.DummyEventHandler
 	WatchRegexps []*WatchRegexp
+	count        int
 }
 
 // isWatched 判断表是否被监控
@@ -42,29 +43,24 @@ func (h *CustomEventHandler) OnRow(e *canal.RowsEvent) error {
 	if !ok {
 		return nil
 	}
-
-	cols := e.Table.Columns
-	if len(cols) == 0 {
-		slog.Error(fmt.Sprintf("表 %s.%s 没有列信息", tableSchema, tableName))
-		return nil
-	}
 	// 根据事件类型生成对应的事件数据
-	dataList := GenerateEventDataList(e)
+	data := GenerateEventData(e)
 	for _, r := range rules {
 		// 如果规则没有客户端连接，则跳过
 		if r.ClientIsEmpty() {
 			continue
 		}
-		err := r.OnNext(dataList)
+		err := r.OnNext(data)
 		if err != nil {
 			slog.Error(fmt.Sprintf("处理删除事件失败: %v", err))
 		}
+		h.count++
 	}
 	return nil
 }
 
-// GenerateEventDataList 根据 canal.RowsEvent 生成对应的 event.Data
-func GenerateEventDataList(e *canal.RowsEvent) *event.Data {
+// GenerateEventData 根据 canal.RowsEvent 生成对应的 event.Data
+func GenerateEventData(e *canal.RowsEvent) *event.Data {
 	switch e.Action {
 	case canal.InsertAction:
 		return &event.Data{

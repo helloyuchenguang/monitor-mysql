@@ -15,16 +15,6 @@ func (cs *ClientService) CreateIndexOrIgnore(table *event.Table) (string, error)
 		return index.(string), nil
 	}
 
-	task, err := cs.CreateIndex(&meilisearch.IndexConfig{
-		Uid:        tableName,
-		PrimaryKey: "id",
-	})
-	if err != nil {
-		slog.Error("创建MeiliSearch索引失败", slog.String("index", tableName), slog.Any("error", err))
-		cs.IndexMap.Delete(tableName) // 创建失败清理
-		return "", err
-	}
-	slog.Info("成功创建MeiliSearch索引", slog.String("index", task.IndexUID))
 	// 将索引名称存入IndexMap
 	index, err := cs.SetAttributesByIndexConfig(tableName)
 	if err != nil {
@@ -39,12 +29,22 @@ func (cs *ClientService) SetAttributesByIndexConfig(tableName string) (string, e
 	if indexCfg, ok := lo.Find(cs.config.indexConfigs, func(item *IndexConfig) bool {
 		return item.tableRegex.MatchString(tableName)
 	}); ok {
+		index := indexCfg.index
+		task, err := cs.CreateIndex(&meilisearch.IndexConfig{
+			Uid:        index,
+			PrimaryKey: "id",
+		})
+		if err != nil {
+			slog.Error("创建MeiliSearch索引失败", slog.String("index", tableName), slog.Any("error", err))
+			cs.IndexMap.Delete(tableName) // 创建失败清理
+			return "", err
+		}
+		slog.Info("成功创建MeiliSearch索引", slog.String("index", task.IndexUID))
 		settings := &meilisearch.Settings{
 			SearchableAttributes: indexCfg.searchers,
 			FilterableAttributes: indexCfg.filters,
 			SortableAttributes:   indexCfg.sorts,
 		}
-		index := indexCfg.index
 		if _, err := cs.Index(index).UpdateSettings(settings); err != nil {
 			slog.Error("MeiliSearch更新索引设置失败", slog.String("index", index), slog.Any("error", err))
 			return "", err
