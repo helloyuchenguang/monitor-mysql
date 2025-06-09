@@ -25,7 +25,7 @@ func (cs *ClientService) asyncDataChange() {
 		if len(buffer) == 0 {
 			return
 		}
-		slog.Info("刷新 MeiliSearch 数据", slog.Int("数量", len(buffer)))
+		slog.Info("批量同步数据到MeiliSearch,数量: ", slog.Int("count", len(buffer)))
 		cs.flushToMeiliSearch(buffer)
 		buffer = buffer[:0]
 	}
@@ -51,6 +51,7 @@ func (cs *ClientService) asyncDataChange() {
 func (cs *ClientService) flushToMeiliSearch(dataList []*event.Data) {
 	docsMap := make(map[string][]event.RowData)
 	deleteIDsMap := make(map[string][]string)
+	insertUpdateCount := 0
 	// 遍历数据列表，分类处理
 	for _, data := range dataList {
 		index, err := cs.CreateIndexOrIgnore(data.Table)
@@ -59,24 +60,31 @@ func (cs *ClientService) flushToMeiliSearch(dataList []*event.Data) {
 		}
 		switch data.EventType {
 		case event.Insert:
-			docsMap[index] = append(docsMap[index], lo.Map(data.SaveData, func(item *event.SaveData, _ int) event.RowData {
+			rowData := lo.Map(data.SaveData, func(item *event.SaveData, _ int) event.RowData {
 				return item.RowData
-			})...)
+			})
+			insertUpdateCount += len(rowData)
+			docsMap[index] = append(docsMap[index], rowData...)
 		case event.Delete:
-			docsMap[index] = append(docsMap[index], lo.Map(data.DeleteData, func(item *event.DeleteData, _ int) event.RowData {
+			rowData := lo.Map(data.DeleteData, func(item *event.DeleteData, _ int) event.RowData {
 				return item.RowData
-			})...)
+			})
+			//insertUpdateCount += len(rowData)
+			docsMap[index] = append(docsMap[index], rowData...)
 		case event.Update:
-			docsMap[index] = append(docsMap[index], lo.Map(data.EditData, func(item *event.EditData, _ int) event.RowData {
+			rowData := lo.Map(data.EditData, func(item *event.EditData, _ int) event.RowData {
 				rowData := item.UnChangeRowData
 				for f, v := range item.EditFieldValues {
 					rowData[f] = v.After
 				}
 				return rowData
-			})...)
+			})
+			insertUpdateCount += len(rowData)
+			docsMap[index] = append(docsMap[index], rowData...)
 		}
 	}
 
+	slog.Info("批处理数据到MeiliSearch,数量: ", slog.Int("insertUpdateCount", insertUpdateCount))
 	// 添加文档
 	for index, docs := range docsMap {
 		if len(docs) == 0 {
