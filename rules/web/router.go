@@ -2,9 +2,10 @@ package web
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"log/slog"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // StartServer 启动Web服务器
@@ -47,8 +48,9 @@ func (w *SSERuleService) StartServer() {
 			select {
 			case dl := <-ch:
 				// 发送消息到客户端
-				_, err := fmt.Fprintf(writer, "data: %s\n\n", dl)
+				_, err := fmt.Fprintf(writer, "data: %s\n\n", dl.ToJson())
 				if err != nil {
+					slog.Error("发送消息失败", slog.String("clientID", clientID), slog.String("error", err.Error()))
 					return
 				}
 				flusher.Flush()

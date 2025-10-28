@@ -1,13 +1,14 @@
 package meili
 
 import (
-	"github.com/meilisearch/meilisearch-go"
-	"github.com/samber/lo"
 	"log/slog"
 	"main/common/config"
 	"main/common/event/rule"
 	"regexp"
 	"sync"
+
+	"github.com/meilisearch/meilisearch-go"
+	"github.com/samber/lo"
 )
 
 const RuleName = "meili"
@@ -85,7 +86,7 @@ func NewMeiliService(cfg *Config) *ClientService {
 		}
 	}()
 	// 删除所有索引
-	service.DeleteAllIndexes()
+	_ = service.DeleteAllIndexes()
 	// 启动异步数据变更监听
 	go service.asyncDataChange()
 

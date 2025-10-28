@@ -238,10 +238,10 @@
         const modalClose = document.getElementById('modal-close');
         const modalTableBody = document.querySelector('#modal-table tbody');
 
-        let seq = 0;  // 序号
-        const dataCache = new Map();  // 存储id对应的旧新数据，方便弹窗查看
+        let seq = 0;  // 序号计数
+        const dataCache = new Map();  // 存储 id → 数据映射
 
-        // 格式化时间
+        // 格式化时间函数
         function formatTime(date) {
             return date.toLocaleTimeString('zh-CN', {hour12: false}) + '.' + String(date.getMilliseconds()).padStart(3, '0');
         }
@@ -279,7 +279,7 @@
             }
         }
 
-        // 生成条目dom
+        // 创建条目DOM
         function createEntry(seq, time, id, edits, oldData, newData) {
             const entry = document.createElement('div');
             entry.className = 'entry';
@@ -355,7 +355,7 @@
             return entry;
         }
 
-        // 弹窗打开
+        // 打开弹窗
         function openModal(id) {
             const record = dataCache.get(id);
             if (!record) return;
@@ -412,36 +412,46 @@
             if (e.key === 'Escape') closeModal();
         });
 
-        // SSE 事件监听
+        // SSE 事件监听部分修改 —— 现在 editData 是数组
         const evtSource = new EventSource(sseUrl);
-        evtSource.onmessage = function (e) {
+        evtSource.onmessage = function (msg) {
             try {
-                const payload = JSON.parse(e.data);
+                const payload = JSON.parse(msg.data);
                 if (!payload || payload.eventType !== 'UPDATE') return;
 
-                const edit = payload.editData;
-                const oldData = edit.unChangeRowData || {};
-                const edits = edit.editFieldValues || {};
-                const newData = {...oldData};
-
-                for (const key in edits) {
-                    newData[key] = edits[key].after;
+                const editList = payload.editData;
+                if (!Array.isArray(editList)) {
+                    console.warn('editData不是数组:', editList);
+                    return;
                 }
 
-                const id = oldData.id || `unknown-${Date.now()}`;
-                const now = new Date();
-                const time = formatTime(now);
-                seq += 1;
+                // 遍历数组内的每一条记录
+                for (const edit of editList) {
+                    const oldData = edit.unChangeRowData || {};
+                    const edits = edit.editFieldValues || {};
+                    const newData = {...oldData};
 
-                const entry = createEntry(seq, time, id, edits, oldData, newData);
-                log.prepend(entry);
-                dataCache.set(id, {oldData, newData, edits});
+                    for (const key in edits) {
+                        newData[key] = edits[key].after;
+                    }
+
+                    const id = oldData.id || `unknown-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                    const now = new Date();
+                    const time = formatTime(now);
+                    seq += 1;
+
+                    const entry = createEntry(seq, time, id, edits, oldData, newData);
+                    log.prepend(entry);
+                    dataCache.set(id, {oldData, newData, edits});
+                }
+
             } catch (err) {
                 console.error('解析SSE数据失败:', err);
             }
         };
     })();
 </script>
+
 
 
 </body>

@@ -30,7 +30,7 @@ func NewSSEConfig(cfg *config.Config) *Config {
 // NewWebSSERuleService 创建一个新的SSE服务实例
 func NewWebSSERuleService(cfg *Config) *SSERuleService {
 	if !cfg.Enable {
-		slog.Info("SSE规则服务未启用", slog.String("addr", cfg.Addr))
+		slog.Warn("SSE规则服务未启用", slog.String("addr", cfg.Addr))
 		return nil
 	}
 	sseRule := SSERuleService{

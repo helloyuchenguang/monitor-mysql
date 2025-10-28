@@ -1,10 +1,11 @@
 package meili
 
 import (
-	"github.com/samber/lo"
 	"log/slog"
 	"main/common/event"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 const (
@@ -90,7 +91,8 @@ func (cs *ClientService) flushToMeiliSearch(dataList []*event.Data) {
 		if len(docs) == 0 {
 			continue
 		}
-		if _, err := cs.Index(index).AddDocuments(docs); err != nil {
+		key := "id"
+		if _, err := cs.Index(index).AddDocuments(docs, &key); err != nil {
 			slog.Error("MeiliSearch添加文档失败", slog.String("index", index), slog.Any("error", err))
 		}
 	}

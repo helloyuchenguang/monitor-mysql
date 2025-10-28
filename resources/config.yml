@@ -1,5 +1,5 @@
 database:
-  addr: 192.168.3.158:3307
+  addr: 192.168.3.160:3307
   user: root
   password: quc@2022@din
   flavor: mysql
@@ -11,7 +11,7 @@ database:
 
 watchHandlers:
   - table: "qucdin_local\\.business_data.tpl_node_*"
-    tableTest: qucdin_local.business_data.tpl_node_v8iuq3pqxl061bd1
+#    tableTest: qucdin_local.business_data.tpl_node_v8iuq3pqxl061bd1
     meiliSearchIndex:
       index: "tpl_node"
       # 搜索字段
@@ -26,18 +26,18 @@ watchHandlers:
       sorts:
         - create_time
     rules:
-      - grpc
+#      - grpc
+#      - meili
       - sse
-      - meili
 
 subscribeServerConfig:
   grpc:
-    enable: true
+    enable: false
     addr: ":10821"
   sse:
     enable: true
     addr: ":10820"
   meili:
-    enable: true
+    enable: false
     addr: http://192.168.60.10:7700
     apiKey: root123456
