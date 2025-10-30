@@ -1,9 +1,10 @@
 package mgrpc
 
 import (
-	"github.com/samber/lo"
 	"main/common/event"
 	"main/rules/mgrpc/api/mycanal"
+
+	"github.com/samber/lo"
 )
 
 // EventDataToGrpcReply 从行数据中获取更新信息

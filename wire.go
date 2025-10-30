@@ -4,12 +4,13 @@
 package main
 
 import (
-	"github.com/google/wire"
 	"main/common/config"
 	"main/monitor"
 	"main/rules/meili"
 	"main/rules/mgrpc"
 	"main/rules/web"
+
+	"github.com/google/wire"
 )
 
 // 初始化SSE服务

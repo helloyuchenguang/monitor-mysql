@@ -1,9 +1,10 @@
 package rule
 
 import (
-	"github.com/google/uuid"
 	"log/slog"
 	"main/common/event"
+
+	"github.com/google/uuid"
 )
 
 // MonitorRuler 监控处理器接口

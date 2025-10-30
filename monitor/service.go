@@ -2,7 +2,6 @@ package monitor
 
 import (
 	"fmt"
-	"github.com/go-mysql-org/go-mysql/canal"
 	"log/slog"
 	"main/common/config"
 	"main/common/event/rule"
@@ -11,6 +10,8 @@ import (
 	"main/rules/web"
 	"math"
 	"regexp"
+
+	"github.com/go-mysql-org/go-mysql/canal"
 )
 
 type CanalMonitorService struct {

@@ -3,6 +3,7 @@ package event
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/go-mysql-org/go-mysql/schema"
 	"github.com/samber/lo"
 )

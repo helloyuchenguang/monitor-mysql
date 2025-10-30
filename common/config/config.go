@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/samber/lo"
-	"gopkg.in/yaml.v3"
 	"log/slog"
 	"os"
 	"regexp"
+
+	"github.com/samber/lo"
+	"gopkg.in/yaml.v3"
 )
 
 // Config 配置文件结构体

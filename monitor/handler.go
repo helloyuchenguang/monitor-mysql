@@ -2,14 +2,15 @@ package monitor
 
 import (
 	"fmt"
-	"github.com/go-mysql-org/go-mysql/canal"
-	"github.com/samber/lo"
 	"log/slog"
 	"main/common/event"
 	"main/common/event/edit"
 	"main/common/event/row"
 	"main/common/event/rule"
 	"regexp"
+
+	"github.com/go-mysql-org/go-mysql/canal"
+	"github.com/samber/lo"
 )
 
 type WatchRegexp struct {

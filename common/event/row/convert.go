@@ -1,9 +1,10 @@
 package row
 
 import (
+	"main/common/event"
+
 	"github.com/go-mysql-org/go-mysql/schema"
 	"github.com/samber/lo"
-	"main/common/event"
 )
 
 // ToRowDataList 转换为rowDataList

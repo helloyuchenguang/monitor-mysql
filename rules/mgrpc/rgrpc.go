@@ -1,10 +1,11 @@
 package mgrpc
 
 import (
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 	"main/rules/mgrpc/api/mycanal"
 	"net"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 )
 
 func (g *GRPCRuleService) RunGrpcCanal() {

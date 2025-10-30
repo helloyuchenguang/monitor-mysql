@@ -1,10 +1,11 @@
 package meili
 
 import (
-	"github.com/meilisearch/meilisearch-go"
-	"github.com/samber/lo"
 	"log/slog"
 	"main/common/event"
+
+	"github.com/meilisearch/meilisearch-go"
+	"github.com/samber/lo"
 )
 
 // CreateIndexOrIgnore 创建索引（若不存在）

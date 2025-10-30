@@ -1,9 +1,10 @@
 package edit
 
 import (
-	"github.com/go-mysql-org/go-mysql/schema"
 	"main/common/event"
 	"reflect"
+
+	"github.com/go-mysql-org/go-mysql/schema"
 )
 
 // ToEditDataList 从行数据中获取更新信息
